@@ -1,6 +1,13 @@
-# Guide Index
+# Agent Stack Guide Index
 
-This index puts the guide files in the recommended execution order.
+This repository is a playbook for safely running multiple coding agents in parallel with Git worktrees.
+Use this index as a reading and execution order so setup, guardrails, and review steps stay consistent.
+
+Suggested path:
+1. Read `GUIDE.md` for the full model and workflow.
+2. Apply repository configuration from `AGENT_CONFIGURATION_GUIDE.md`.
+3. Run from `QUICKSTART_COMMANDS.md` or `GITHUB_PR_WORKFLOW.md`.
+4. Make merge/discard decisions with `REVIEW_CHECKLIST.md`.
 
 ## 1. Start Here
 

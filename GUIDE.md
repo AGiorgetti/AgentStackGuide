@@ -1,6 +1,6 @@
-# Git Worktree Guide for Parallel Agent Development (Codex + Claude Code + GitHub Copilot)
+# Agent Stack Guide
 
-This guide shows a practical workflow for using `git worktree` so multiple coding agents can work in parallel without stepping on each other.
+This guide defines a practical, enforceable workflow for running Codex, Claude Code, and GitHub Copilot in parallel using `git worktree`.
 
 You will learn:
 - What Git worktrees are
