@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+zero="0000000000000000000000000000000000000000"
+git_dir="$(git rev-parse --git-dir)"
+expected_branch_file="$git_dir/agent-expected-branch"
+[ -f "$expected_branch_file" ] || exit 0
+
+expected_branch="$(cat "$expected_branch_file")"
+expected_remote_ref="refs/heads/$expected_branch"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" != "$expected_remote_ref" ]; then
+    echo "Blocked: this worktree can only push to '$expected_remote_ref'." >&2
+    exit 1
+  fi
+
+  if [ "$local_sha" = "$zero" ]; then
+    echo "Blocked: branch deletion push is not allowed from agent worktrees." >&2
+    exit 1
+  fi
+
+  if [ "$remote_sha" != "$zero" ]; then
+    if ! git merge-base --is-ancestor "$remote_sha" "$local_sha"; then
+      echo "Blocked: non-fast-forward push detected (force push not allowed)." >&2
+      exit 1
+    fi
+  fi
+done
