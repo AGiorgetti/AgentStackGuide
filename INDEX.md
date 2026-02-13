@@ -7,7 +7,7 @@ Suggested path:
 1. Read `GUIDE.md` for the full model and workflow.
 2. Apply repository configuration from `AGENT_CONFIGURATION_GUIDE.md`.
 3. Run from `QUICKSTART_COMMANDS.md` or `GITHUB_PR_WORKFLOW.md`.
-4. Make merge/discard decisions with `REVIEW_CHECKLIST.md`.
+4. Make merge/discard decisions with `REVIEW_MERGE_OR_DISCARD.md`.
 
 ## 1. Start Here
 
@@ -31,7 +31,7 @@ Purpose: protected branch + required checks + approval workflow.
 
 ## 5. Final Human Decision Gate
 
-1. `REVIEW_CHECKLIST.md`
+1. `REVIEW_MERGE_OR_DISCARD.md`
 Purpose: explicit merge-or-discard checklist and cleanup procedure.
 
 ## 6. Templates for Any Repository
@@ -65,19 +65,3 @@ Purpose: one-command bootstrap for Linux/macOS/Git Bash.
 
 1. `scripts/setup-agent-guardrails.ps1`
 Purpose: one-command bootstrap for PowerShell on Windows.
-
----
-
-## Command Argument Order Standard
-
-Use this order throughout:
-
-```bash
-git worktree add -b <new-branch> <worktree-path> <start-point>
-```
-
-Example:
-
-```bash
-git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth develop
-```

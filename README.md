@@ -15,7 +15,7 @@ The guide focuses on:
 - Agent/file mapping and setup model: `AGENT_CONFIGURATION_GUIDE.md`
 - Commands-only quickstart: `QUICKSTART_COMMANDS.md`
 - GitHub PR variant with branch protection: `GITHUB_PR_WORKFLOW.md`
-- Human decision checklist: `REVIEW_CHECKLIST.md`
+- Human decision checklist: `REVIEW_MERGE_OR_DISCARD.md`
 - Reusable templates and hooks in `templates/`
 - Bootstrap scripts in `scripts/` for Bash and PowerShell
 

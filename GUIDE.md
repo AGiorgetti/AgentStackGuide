@@ -373,7 +373,7 @@ This contract makes human review faster and safer.
 ## 8. Human Review Workflow
 
 After agents finish, run the full checklist in:
-- `REVIEW_CHECKLIST.md`
+- `REVIEW_MERGE_OR_DISCARD.md`
 
 Minimal pre-check:
 
@@ -388,7 +388,7 @@ git diff --stat develop..feat/<agent>-<task>
 ## 9. Decision Point: Merge or Discard
 
 Use the canonical procedures in:
-- `REVIEW_CHECKLIST.md`
+- `REVIEW_MERGE_OR_DISCARD.md`
 
 Quick rule:
 - Merge if review + validation pass.
@@ -420,7 +420,7 @@ Then ensure only active worktrees remain.
 For 3+ agents, standardize:
 - Branch naming: `feat/<agent>-<task>`
 - Folder naming: `<agent>-<task>`
-- Human review checklist (see `REVIEW_CHECKLIST.md`)
+- Human review checklist (see `REVIEW_MERGE_OR_DISCARD.md`)
 
 Practical orchestration tips:
 - Keep tasks independent to reduce merge conflicts
@@ -506,7 +506,7 @@ git worktree prune
 
 For reusable prompts and review standards, see:
 - `AGENT_CONFIGURATION_GUIDE.md`
-- `REVIEW_CHECKLIST.md`
+- `REVIEW_MERGE_OR_DISCARD.md`
 - `QUICKSTART_COMMANDS.md`
 - `GITHUB_PR_WORKFLOW.md`
 - `templates/AGENT_EXECUTION_CONTRACT.md`
