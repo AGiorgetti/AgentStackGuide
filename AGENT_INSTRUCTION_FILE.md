@@ -1,10 +1,10 @@
-# Agent Instruction File (Send This to Codex or Claude Code)
+# Agent Instruction File (Send This to Codex, Claude Code, or GitHub Copilot)
 
 Copy this message, replace placeholders, and send as the first prompt to the agent.
 
 ```text
 Assignment:
-- Agent: <Codex|Claude Code>
+- Agent: <Codex|Claude Code|GitHub Copilot>
 - Branch: <assigned-branch>
 - Worktree: <absolute-or-relative-path>
 

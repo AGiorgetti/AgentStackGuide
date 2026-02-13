@@ -39,6 +39,7 @@ mkdir -p ../myapp-worktrees
 
 git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth develop
 git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics develop
+git worktree add -b feat/copilot-docs ../myapp-worktrees/copilot-docs develop
 ```
 
 ---
@@ -59,6 +60,13 @@ cd ../myapp-worktrees/claude-add-metrics
 # run Claude Code with task instructions
 ```
 
+Terminal C:
+
+```bash
+cd ../myapp-worktrees/copilot-docs
+# run GitHub Copilot with task instructions
+```
+
 Agent constraints:
 - Commit only on assigned branch
 - Keep scope limited to assigned task
@@ -76,6 +84,9 @@ git push -u origin feat/codex-fix-auth
 
 cd ../myapp-worktrees/claude-add-metrics
 git push -u origin feat/claude-add-metrics
+
+cd ../myapp-worktrees/copilot-docs
+git push -u origin feat/copilot-docs
 ```
 
 Open PRs targeting `develop`.
@@ -163,6 +174,7 @@ git worktree prune
 Add labels to agent PRs:
 - `agent:codex`
 - `agent:claude`
+- `agent:copilot`
 - `risk:low|medium|high`
 - `needs-human-review`
 

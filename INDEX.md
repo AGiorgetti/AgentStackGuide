@@ -41,8 +41,14 @@ Purpose: repo instruction file for Codex.
 1. `templates/CLAUDE.md`
 Purpose: repo instruction file for Claude Code.
 
+1. `templates/COPILOT.md`
+Purpose: repo instruction file for GitHub Copilot Chat.
+
 1. `templates/AGENT_KICKOFF_PROMPT.md`
-Purpose: reusable first-message template for both agents.
+Purpose: reusable first-message template for all agents.
+
+1. `templates/.github/copilot-instructions.md`
+Purpose: GitHub Copilot native repository instruction file.
 
 1. `templates/.githooks/pre-commit`
 Purpose: blocks commits from wrong branch/worktree.

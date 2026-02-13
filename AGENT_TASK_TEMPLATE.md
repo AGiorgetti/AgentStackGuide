@@ -1,4 +1,4 @@
-# Agent Task Template (Codex / Claude Code)
+# Agent Task Template (Codex / Claude Code / GitHub Copilot)
 
 Use this template when assigning a task to an agent in a dedicated worktree.
 
@@ -6,7 +6,7 @@ Use this template when assigning a task to an agent in a dedicated worktree.
 
 ## Task Metadata
 
-- Agent: `Codex` or `Claude Code`
+- Agent: `Codex`, `Claude Code`, or `GitHub Copilot`
 - Branch: `feat/<agent>-<task>`
 - Worktree path: `../<repo>-worktrees/<agent>-<task>`
 - Base branch: `develop`

@@ -4,7 +4,7 @@ Use this as the first message to any agent run.
 
 ```text
 Assignment:
-- Agent: <Codex|Claude Code>
+- Agent: <Codex|Claude Code|GitHub Copilot>
 - Branch: <assigned-branch>
 - Worktree: <absolute-or-relative-path>
 

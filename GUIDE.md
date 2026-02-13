@@ -1,11 +1,11 @@
-# Git Worktree Guide for Parallel Agent Development (Codex + Claude Code)
+# Git Worktree Guide for Parallel Agent Development (Codex + Claude Code + GitHub Copilot)
 
 This guide shows a practical workflow for using `git worktree` so multiple coding agents can work in parallel without stepping on each other.
 
 You will learn:
 - What Git worktrees are
 - How to create one worktree per agent/task
-- How to run Codex and Claude Code in different worktrees
+- How to run Codex, Claude Code, and GitHub Copilot in different worktrees
 - How a human reviews results and chooses to merge or discard
 
 ---
@@ -52,6 +52,7 @@ Create a sibling directory for worktrees:
 ~/src/myapp-worktrees/
   codex-fix-auth/
   claude-add-metrics/
+  copilot-docs/
 ```
 
 This keeps your primary repo clean and makes cleanup easier.
@@ -82,10 +83,11 @@ git config alias.wtl "worktree list"
 
 ## 5. Create Worktrees for Multiple Agents
 
-### Example: two parallel tasks
+### Example: three parallel tasks
 
 - Task A for Codex: fix auth retry bug
 - Task B for Claude Code: add request metrics
+- Task C for GitHub Copilot: improve API error docs
 
 From the primary repo root:
 
@@ -94,6 +96,7 @@ mkdir -p ../myapp-worktrees
 
 git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth develop
 git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics develop
+git worktree add -b feat/copilot-docs ../myapp-worktrees/copilot-docs develop
 ```
 
 What this does:
@@ -135,7 +138,20 @@ Give Claude Code:
 - Boundaries and non-goals
 - Required verification steps
 
-Important rules for both agents:
+### 6.3 GitHub Copilot worktree
+
+In another terminal/editor workspace:
+
+```bash
+cd ../myapp-worktrees/copilot-docs
+```
+
+Give GitHub Copilot:
+- A focused task prompt
+- Exact files to edit
+- Required validation commands
+
+Important rules for all agents:
 - Do not rebase other agent branches
 - Do not force-push shared branches
 - Commit only in their assigned branch/worktree
@@ -173,7 +189,7 @@ printf '%s\n' "feat/codex-fix-auth" > "$GIT_DIR/agent-expected-branch"
 printf '%s\n' "$(pwd -P)" > "$GIT_DIR/agent-expected-worktree"
 ```
 
-Repeat with the Claude worktree/branch values.
+Repeat with the Claude and Copilot worktree/branch values.
 
 ### 7.3 Install local guardrail hooks
 
@@ -289,10 +305,12 @@ Agent must produce:
 
 ### 7.7 Instruction files to add in each target Git repo
 
-Add these files at repo root so both agents receive the same rules:
+Add these files so all agents receive the same rules:
 - `AGENT_EXECUTION_CONTRACT.md`
 - `AGENTS.md` (Codex instructions)
 - `CLAUDE.md` (Claude Code instructions)
+- `COPILOT.md` (GitHub Copilot instructions)
+- `.github/copilot-instructions.md` (GitHub Copilot native repo instructions)
 - `.githooks/pre-commit`
 - `.githooks/pre-push`
 
@@ -300,7 +318,9 @@ Templates are provided in this guide repo:
 - `templates/AGENT_EXECUTION_CONTRACT.md`
 - `templates/AGENTS.md`
 - `templates/CLAUDE.md`
+- `templates/COPILOT.md`
 - `templates/AGENT_KICKOFF_PROMPT.md`
+- `templates/.github/copilot-instructions.md`
 - `templates/.githooks/pre-commit`
 - `templates/.githooks/pre-push`
 
@@ -317,6 +337,10 @@ TARGET_REPO=/path/to/your-repo
 cp "$GUIDE_REPO/templates/AGENT_EXECUTION_CONTRACT.md" "$TARGET_REPO/AGENT_EXECUTION_CONTRACT.md"
 cp "$GUIDE_REPO/templates/AGENTS.md" "$TARGET_REPO/AGENTS.md"
 cp "$GUIDE_REPO/templates/CLAUDE.md" "$TARGET_REPO/CLAUDE.md"
+cp "$GUIDE_REPO/templates/COPILOT.md" "$TARGET_REPO/COPILOT.md"
+cp "$GUIDE_REPO/templates/AGENT_KICKOFF_PROMPT.md" "$TARGET_REPO/AGENT_KICKOFF_PROMPT.md"
+mkdir -p "$TARGET_REPO/.github"
+cp "$GUIDE_REPO/templates/.github/copilot-instructions.md" "$TARGET_REPO/.github/copilot-instructions.md"
 
 mkdir -p "$TARGET_REPO/.githooks"
 cp "$GUIDE_REPO/templates/.githooks/pre-commit" "$TARGET_REPO/.githooks/pre-commit"
@@ -371,13 +395,28 @@ Bootstrap option (recommended):
 4. Ensure `CLAUDE.md` exists at repo root.
 5. Send kickoff instructions using `templates/AGENT_KICKOFF_PROMPT.md` with filled placeholders.
 
-### 7.11 Instruction file to send agents
+### 7.11 Configure GitHub Copilot (per worktree)
 
-Use this file for both agents:
+1. Open terminal/editor in Copilot worktree:
+   - `cd ../myapp-worktrees/copilot-docs`
+2. Confirm branch/worktree binding:
+   - `git checkout feat/copilot-docs`
+   - `git branch --show-current`
+   - `git rev-parse --show-toplevel`
+3. Write guardrail metadata for hooks:
+   - `GIT_DIR="$(git rev-parse --git-dir)"`
+   - `printf '%s\n' "feat/copilot-docs" > "$GIT_DIR/agent-expected-branch"`
+   - `printf '%s\n' "$(pwd -P)" > "$GIT_DIR/agent-expected-worktree"`
+4. Ensure `COPILOT.md` and `.github/copilot-instructions.md` exist in the repository.
+5. Start Copilot Chat from that worktree folder and send kickoff instructions using `templates/AGENT_KICKOFF_PROMPT.md`.
+
+### 7.12 Instruction file to send agents
+
+Use this file for all agents:
 - `templates/AGENT_KICKOFF_PROMPT.md`
 
 Always fill these placeholders before sending:
-- `<Codex|Claude Code>`
+- `<Codex|Claude Code|GitHub Copilot>`
 - `<assigned-branch>`
 - `<absolute-or-relative-path>`
 - `<what to implement>`
@@ -399,6 +438,7 @@ From primary repo:
 git fetch --all --prune
 git log --oneline --decorate develop..feat/codex-fix-auth
 git log --oneline --decorate develop..feat/claude-add-metrics
+git log --oneline --decorate develop..feat/copilot-docs
 ```
 
 Review diff quality:
@@ -406,6 +446,7 @@ Review diff quality:
 ```bash
 git diff --stat develop..feat/codex-fix-auth
 git diff --stat develop..feat/claude-add-metrics
+git diff --stat develop..feat/copilot-docs
 ```
 
 ### 8.2 Check out each worktree and validate
@@ -415,6 +456,9 @@ cd ../myapp-worktrees/codex-fix-auth
 # run tests/lint/build for your stack
 
 cd ../myapp-worktrees/claude-add-metrics
+# run tests/lint/build for your stack
+
+cd ../myapp-worktrees/copilot-docs
 # run tests/lint/build for your stack
 ```
 
@@ -508,7 +552,7 @@ If two agent branches touch same files:
 4. Re-run validation.
 5. Merge second branch.
 
-Do not ask both agents to auto-resolve the same conflict blindly.
+Do not ask multiple agents to auto-resolve the same conflict blindly.
 
 ---
 
@@ -519,9 +563,10 @@ Do not ask both agents to auto-resolve the same conflict blindly.
 git fetch --all --prune
 mkdir -p ../myapp-worktrees
 
-# create two agent worktrees
+# create three agent worktrees
 git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth develop
 git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics develop
+git worktree add -b feat/copilot-docs ../myapp-worktrees/copilot-docs develop
 
 # ...agents work in their folders and commit...
 
@@ -531,9 +576,11 @@ git pull --ff-only
 git merge --no-ff feat/codex-fix-auth
 git push origin develop
 
-# discard the other
+# discard the others
 git worktree remove ../myapp-worktrees/claude-add-metrics
 git branch -D feat/claude-add-metrics
+git worktree remove ../myapp-worktrees/copilot-docs
+git branch -D feat/copilot-docs
 
 # cleanup
 git worktree prune
@@ -579,6 +626,8 @@ For reusable prompts and review standards, see:
 - `templates/AGENT_EXECUTION_CONTRACT.md`
 - `templates/AGENTS.md`
 - `templates/CLAUDE.md`
+- `templates/COPILOT.md`
 - `templates/AGENT_KICKOFF_PROMPT.md`
+- `templates/.github/copilot-instructions.md`
 - `templates/.githooks/pre-commit`
 - `templates/.githooks/pre-push`

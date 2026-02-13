@@ -84,7 +84,9 @@ copy_file() {
 copy_file "$SOURCE_DIR/AGENT_EXECUTION_CONTRACT.md" "$TARGET_REPO/AGENT_EXECUTION_CONTRACT.md"
 copy_file "$SOURCE_DIR/AGENTS.md" "$TARGET_REPO/AGENTS.md"
 copy_file "$SOURCE_DIR/CLAUDE.md" "$TARGET_REPO/CLAUDE.md"
+copy_file "$SOURCE_DIR/COPILOT.md" "$TARGET_REPO/COPILOT.md"
 copy_file "$SOURCE_DIR/AGENT_KICKOFF_PROMPT.md" "$TARGET_REPO/AGENT_KICKOFF_PROMPT.md"
+copy_file "$SOURCE_DIR/.github/copilot-instructions.md" "$TARGET_REPO/.github/copilot-instructions.md"
 copy_file "$SOURCE_DIR/.githooks/pre-commit" "$TARGET_REPO/.githooks/pre-commit"
 copy_file "$SOURCE_DIR/.githooks/pre-push" "$TARGET_REPO/.githooks/pre-push"
 
