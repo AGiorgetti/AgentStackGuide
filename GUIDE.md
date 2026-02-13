@@ -305,12 +305,12 @@ Agent must produce:
 
 ### 7.7 Instruction files to add in each target Git repo
 
-Add these files so all agents receive the same rules:
+Add these files for shared and per-agent instruction loading:
 - `AGENT_EXECUTION_CONTRACT.md`
 - `AGENTS.md` (Codex instructions)
 - `CLAUDE.md` (Claude Code instructions)
-- `COPILOT.md` (GitHub Copilot instructions)
-- `.github/copilot-instructions.md` (GitHub Copilot native repo instructions)
+- `.github/copilot-instructions.md` (GitHub Copilot canonical repo instructions)
+- `AGENT_KICKOFF_PROMPT.md` (shared kickoff prompt file sent to all agents)
 - `.githooks/pre-commit`
 - `.githooks/pre-push`
 
@@ -318,7 +318,6 @@ Templates are provided in this guide repo:
 - `templates/AGENT_EXECUTION_CONTRACT.md`
 - `templates/AGENTS.md`
 - `templates/CLAUDE.md`
-- `templates/COPILOT.md`
 - `templates/AGENT_KICKOFF_PROMPT.md`
 - `templates/.github/copilot-instructions.md`
 - `templates/.githooks/pre-commit`
@@ -337,7 +336,6 @@ TARGET_REPO=/path/to/your-repo
 cp "$GUIDE_REPO/templates/AGENT_EXECUTION_CONTRACT.md" "$TARGET_REPO/AGENT_EXECUTION_CONTRACT.md"
 cp "$GUIDE_REPO/templates/AGENTS.md" "$TARGET_REPO/AGENTS.md"
 cp "$GUIDE_REPO/templates/CLAUDE.md" "$TARGET_REPO/CLAUDE.md"
-cp "$GUIDE_REPO/templates/COPILOT.md" "$TARGET_REPO/COPILOT.md"
 cp "$GUIDE_REPO/templates/AGENT_KICKOFF_PROMPT.md" "$TARGET_REPO/AGENT_KICKOFF_PROMPT.md"
 mkdir -p "$TARGET_REPO/.github"
 cp "$GUIDE_REPO/templates/.github/copilot-instructions.md" "$TARGET_REPO/.github/copilot-instructions.md"
@@ -407,7 +405,7 @@ Bootstrap option (recommended):
    - `GIT_DIR="$(git rev-parse --git-dir)"`
    - `printf '%s\n' "feat/copilot-docs" > "$GIT_DIR/agent-expected-branch"`
    - `printf '%s\n' "$(pwd -P)" > "$GIT_DIR/agent-expected-worktree"`
-4. Ensure `COPILOT.md` and `.github/copilot-instructions.md` exist in the repository.
+4. Ensure `.github/copilot-instructions.md` exists in the repository.
 5. Start Copilot Chat from that worktree folder and send kickoff instructions using `templates/AGENT_KICKOFF_PROMPT.md`.
 
 ### 7.12 Instruction file to send agents
@@ -421,6 +419,23 @@ Always fill these placeholders before sending:
 - `<absolute-or-relative-path>`
 - `<what to implement>`
 - `<list exact commands>`
+
+### 7.13 Agent-to-file mapping (configuration guide)
+
+Use this mapping in each target repo:
+
+- Codex:
+  - reads `AGENTS.md`
+  - must obey `AGENT_EXECUTION_CONTRACT.md`
+  - receives runtime task message from `AGENT_KICKOFF_PROMPT.md`
+- Claude Code:
+  - reads `CLAUDE.md`
+  - must obey `AGENT_EXECUTION_CONTRACT.md`
+  - receives runtime task message from `AGENT_KICKOFF_PROMPT.md`
+- GitHub Copilot:
+  - reads `.github/copilot-instructions.md` (canonical)
+  - must obey `AGENT_EXECUTION_CONTRACT.md`
+  - receives runtime task message from `AGENT_KICKOFF_PROMPT.md`
 
 This contract makes human review faster and safer.
 
@@ -620,13 +635,13 @@ git worktree prune
 For reusable prompts and review standards, see:
 - `AGENT_TASK_TEMPLATE.md`
 - `AGENT_INSTRUCTION_FILE.md`
+- `AGENT_CONFIGURATION_GUIDE.md`
 - `REVIEW_CHECKLIST.md`
 - `QUICKSTART_COMMANDS.md`
 - `GITHUB_PR_WORKFLOW.md`
 - `templates/AGENT_EXECUTION_CONTRACT.md`
 - `templates/AGENTS.md`
 - `templates/CLAUDE.md`
-- `templates/COPILOT.md`
 - `templates/AGENT_KICKOFF_PROMPT.md`
 - `templates/.github/copilot-instructions.md`
 - `templates/.githooks/pre-commit`

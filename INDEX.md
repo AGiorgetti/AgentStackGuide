@@ -15,6 +15,9 @@ Purpose: consistent task brief for each agent/worktree.
 1. `AGENT_INSTRUCTION_FILE.md`
 Purpose: copy/paste instruction message to send as first prompt to each agent.
 
+1. `AGENT_CONFIGURATION_GUIDE.md`
+Purpose: exact mapping of which agent uses which instruction files.
+
 ## 3. Execute Quickly
 
 1. `QUICKSTART_COMMANDS.md`
@@ -41,14 +44,11 @@ Purpose: repo instruction file for Codex.
 1. `templates/CLAUDE.md`
 Purpose: repo instruction file for Claude Code.
 
-1. `templates/COPILOT.md`
-Purpose: repo instruction file for GitHub Copilot Chat.
-
 1. `templates/AGENT_KICKOFF_PROMPT.md`
 Purpose: reusable first-message template for all agents.
 
 1. `templates/.github/copilot-instructions.md`
-Purpose: GitHub Copilot native repository instruction file.
+Purpose: canonical GitHub Copilot repository instruction file.
 
 1. `templates/.githooks/pre-commit`
 Purpose: blocks commits from wrong branch/worktree.

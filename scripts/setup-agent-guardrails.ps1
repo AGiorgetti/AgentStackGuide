@@ -46,7 +46,6 @@ if ($LASTEXITCODE -ne 0) {
 Copy-TemplateFile -SourcePath (Join-Path $SourceDir "AGENT_EXECUTION_CONTRACT.md") -DestinationPath (Join-Path $TargetRepo "AGENT_EXECUTION_CONTRACT.md") -ForceOverwrite:$Force
 Copy-TemplateFile -SourcePath (Join-Path $SourceDir "AGENTS.md") -DestinationPath (Join-Path $TargetRepo "AGENTS.md") -ForceOverwrite:$Force
 Copy-TemplateFile -SourcePath (Join-Path $SourceDir "CLAUDE.md") -DestinationPath (Join-Path $TargetRepo "CLAUDE.md") -ForceOverwrite:$Force
-Copy-TemplateFile -SourcePath (Join-Path $SourceDir "COPILOT.md") -DestinationPath (Join-Path $TargetRepo "COPILOT.md") -ForceOverwrite:$Force
 Copy-TemplateFile -SourcePath (Join-Path $SourceDir "AGENT_KICKOFF_PROMPT.md") -DestinationPath (Join-Path $TargetRepo "AGENT_KICKOFF_PROMPT.md") -ForceOverwrite:$Force
 Copy-TemplateFile -SourcePath (Join-Path $SourceDir ".github\copilot-instructions.md") -DestinationPath (Join-Path $TargetRepo ".github\copilot-instructions.md") -ForceOverwrite:$Force
 Copy-TemplateFile -SourcePath (Join-Path $SourceDir ".githooks\pre-commit") -DestinationPath (Join-Path $TargetRepo ".githooks\pre-commit") -ForceOverwrite:$Force
