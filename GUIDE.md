@@ -191,29 +191,58 @@ printf '%s\n' "$(pwd -P)" > "$GIT_DIR/agent-expected-worktree"
 
 Repeat with the Claude and Copilot worktree/branch values.
 
-### 7.3 Install local guardrail hooks
+### 7.3 What guardrails are
 
-From repo root, install shared hooks from templates:
+Guardrails are two layers:
+
+- Policy guardrails:
+  - `AGENT_EXECUTION_CONTRACT.md`
+  - `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`
+  - `AGENT_KICKOFF_PROMPT.md`
+- Technical guardrails:
+  - `.githooks/pre-commit`: blocks wrong-branch/wrong-worktree commits
+  - `.githooks/pre-push`: blocks push to wrong branch and non-fast-forward push
+  - `core.hooksPath=.githooks`: activates hooks in the repo
+
+Recommended default:
+- Guardrails ON for any shared repo or branch intended for review/merge.
+
+Optional:
+- Guardrails OFF for local experiments or throwaway branches only.
+
+### 7.4 Install or toggle guardrails
+
+From repo root, use bootstrap scripts:
+
+Guardrails ON:
 
 ```bash
-./scripts/setup-agent-guardrails.sh --target /path/to/your-repo
+./scripts/setup-agent-guardrails.sh --target /path/to/your-repo --guardrails on
 ```
 
-or:
+```powershell
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo -Guardrails on
+```
+
+Guardrails OFF:
+
+```bash
+./scripts/setup-agent-guardrails.sh --target /path/to/your-repo --guardrails off
+```
 
 ```powershell
-.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo -Guardrails off
 ```
 
 These scripts read `templates/install-manifest.txt` so docs and installers stay in sync.
 
-What this enforces:
-- Wrong branch commit in a worktree is blocked.
+What technical guardrails enforce:
+- Wrong-branch commit in a worktree is blocked.
 - Push to another branch is blocked.
 - Non-fast-forward push (force push) is blocked.
 - Branch deletion push from an agent worktree is blocked.
 
-### 7.4 Rebase and update policy
+### 7.5 Rebase and update policy
 
 Allowed:
 - Rebase or merge only the current agent branch onto `develop`.
@@ -230,7 +259,7 @@ git fetch origin
 git rebase origin/develop
 ```
 
-### 7.5 Prompt guardrails for every agent run
+### 7.6 Prompt guardrails for every agent run
 
 Include this exact block in each agent prompt:
 
@@ -242,14 +271,14 @@ Commit only in your assigned branch/worktree.
 If you hit a conflict outside your scope, stop and report.
 ```
 
-### 7.6 Required handoff from agent
+### 7.7 Required handoff from agent
 
 Agent must produce:
 - Small logical commits
 - Final change summary
 - Risks and TODOs
 
-### 7.7 Instruction files to add in each target Git repo
+### 7.8 Instruction files to add in each target Git repo
 
 Add these files for shared and per-agent instruction loading:
 - `AGENT_EXECUTION_CONTRACT.md`
@@ -270,18 +299,18 @@ Templates are provided in this guide repo:
 - `templates/.githooks/pre-push`
 - `templates/install-manifest.txt` (canonical install list used by bootstrap scripts)
 
-### 7.8 Install templates in a target repo
+### 7.9 Install templates in a target repo
 
 Preferred:
 
 ```bash
-./scripts/setup-agent-guardrails.sh --target /path/to/your-repo
-./scripts/setup-agent-guardrails.sh --target /path/to/your-repo --force
+./scripts/setup-agent-guardrails.sh --target /path/to/your-repo --guardrails on
+./scripts/setup-agent-guardrails.sh --target /path/to/your-repo --guardrails on --force
 ```
 
 ```powershell
-.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo
-.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo -Force
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo -Guardrails on
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo -Guardrails on -Force
 ```
 
 Manual fallback (driven by manifest):
@@ -304,7 +333,7 @@ chmod +x .githooks/pre-commit .githooks/pre-push
 git config core.hooksPath .githooks
 ```
 
-### 7.9 Configure Codex (per worktree)
+### 7.10 Configure Codex (per worktree)
 
 1. Open terminal in Codex worktree:
    - `cd ../myapp-worktrees/codex-fix-auth`
@@ -319,7 +348,7 @@ git config core.hooksPath .githooks
 4. Send kickoff instructions using `templates/AGENT_KICKOFF_PROMPT.md` with filled placeholders.
 5. Require Codex to report pre-edit check output before code changes.
 
-### 7.10 Configure Claude Code (per worktree)
+### 7.11 Configure Claude Code (per worktree)
 
 1. Open terminal in Claude worktree:
    - `cd ../myapp-worktrees/claude-add-metrics`
@@ -334,7 +363,7 @@ git config core.hooksPath .githooks
 4. Ensure `CLAUDE.md` exists at repo root.
 5. Send kickoff instructions using `templates/AGENT_KICKOFF_PROMPT.md` with filled placeholders.
 
-### 7.11 Configure GitHub Copilot (per worktree)
+### 7.12 Configure GitHub Copilot (per worktree)
 
 1. Open terminal/editor in Copilot worktree:
    - `cd ../myapp-worktrees/copilot-docs`
@@ -349,7 +378,7 @@ git config core.hooksPath .githooks
 4. Ensure `.github/copilot-instructions.md` exists in the repository.
 5. Start Copilot Chat from that worktree folder and send kickoff instructions using `templates/AGENT_KICKOFF_PROMPT.md`.
 
-### 7.12 Instruction file to send agents
+### 7.13 Instruction file to send agents
 
 Use this file for all agents:
 - `templates/AGENT_KICKOFF_PROMPT.md`
@@ -361,7 +390,7 @@ Always fill these placeholders before sending:
 - `<what to implement>`
 - `<list exact commands>`
 
-### 7.13 Agent-to-file mapping
+### 7.14 Agent-to-file mapping
 
 Canonical mapping is maintained in:
 - `AGENT_CONFIGURATION_GUIDE.md`

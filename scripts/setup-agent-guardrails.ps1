@@ -2,6 +2,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$TargetRepo,
     [string]$SourceDir = (Join-Path $PSScriptRoot "..\templates"),
+    [ValidateSet("on", "off")]
+    [string]$Guardrails = "on",
     [switch]$Force
 )
 
@@ -30,15 +32,6 @@ function Copy-TemplateFile {
     Write-Host "COPY   $DestinationPath"
 }
 
-if (-not (Test-Path $SourceDir)) {
-    throw "Source templates dir not found: $SourceDir"
-}
-
-$manifestPath = Join-Path $SourceDir "install-manifest.txt"
-if (-not (Test-Path $manifestPath)) {
-    throw "Install manifest not found: $manifestPath"
-}
-
 if (-not (Test-Path $TargetRepo)) {
     throw "Target repo path not found: $TargetRepo"
 }
@@ -46,6 +39,32 @@ if (-not (Test-Path $TargetRepo)) {
 git -C $TargetRepo rev-parse --git-dir | Out-Null
 if ($LASTEXITCODE -ne 0) {
     throw "Target is not a Git repository: $TargetRepo"
+}
+
+if ($Guardrails -eq "off") {
+    git -C $TargetRepo config --get core.hooksPath | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        git -C $TargetRepo config --unset core.hooksPath
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to unset core.hooksPath in target repo."
+        }
+        Write-Host "SET    git config --unset core.hooksPath"
+    }
+    else {
+        Write-Host "INFO   Guardrails already disabled (core.hooksPath not set)."
+    }
+
+    Write-Host "DONE   Guardrails OFF for: $TargetRepo"
+    return
+}
+
+if (-not (Test-Path $SourceDir)) {
+    throw "Source templates dir not found: $SourceDir"
+}
+
+$manifestPath = Join-Path $SourceDir "install-manifest.txt"
+if (-not (Test-Path $manifestPath)) {
+    throw "Install manifest not found: $manifestPath"
 }
 
 foreach ($rawLine in Get-Content $manifestPath) {
@@ -66,4 +85,4 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "SET    git config core.hooksPath .githooks"
-Write-Host "DONE   Guardrail bootstrap complete for: $TargetRepo"
+Write-Host "DONE   Guardrails ON for: $TargetRepo"

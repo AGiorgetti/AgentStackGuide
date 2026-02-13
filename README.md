@@ -26,6 +26,7 @@ The guide focuses on:
 3. Install templates with:
    - `scripts/setup-agent-guardrails.sh`
    - `scripts/setup-agent-guardrails.ps1`
+4. Keep guardrails `on` by default; switch `off` only for local experiments.
 
 ## Scope
 

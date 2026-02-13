@@ -29,12 +29,24 @@ This guide is the canonical mapping for which instruction files each agent uses.
 Use bootstrap scripts:
 
 ```bash
-./scripts/setup-agent-guardrails.sh --target /path/to/repo
+./scripts/setup-agent-guardrails.sh --target /path/to/repo --guardrails on
 ```
 
 ```powershell
-.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\repo
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\repo -Guardrails on
 ```
 
 Installer source of truth:
 - `templates/install-manifest.txt`
+
+## Guardrails Mode
+
+Guardrails OFF (optional for local experiments only):
+
+```bash
+./scripts/setup-agent-guardrails.sh --target /path/to/repo --guardrails off
+```
+
+```powershell
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\repo -Guardrails off
+```

@@ -4,10 +4,12 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  setup-agent-guardrails.sh --target <target-repo> [--source <templates-dir>] [--force]
+  setup-agent-guardrails.sh --target <target-repo> [--guardrails <on|off>] [--source <templates-dir>] [--force]
 
 Options:
   --target   Path to target Git repository (required)
+  --guardrails
+             Guardrails mode: on (default) or off
   --source   Path to templates directory (default: ../templates from this script)
   --force    Overwrite existing files
   -h, --help Show this help
@@ -18,6 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_DIR="$SCRIPT_DIR/../templates"
 TARGET_REPO=""
 FORCE=0
+GUARDRAILS="on"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -27,6 +30,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --source)
       SOURCE_DIR="${2:-}"
+      shift 2
+      ;;
+    --guardrails)
+      GUARDRAILS="${2:-}"
       shift 2
       ;;
     --force)
@@ -51,14 +58,8 @@ if [[ -z "$TARGET_REPO" ]]; then
   exit 1
 fi
 
-if [[ ! -d "$SOURCE_DIR" ]]; then
-  echo "Error: source templates dir not found: $SOURCE_DIR" >&2
-  exit 1
-fi
-
-MANIFEST="$SOURCE_DIR/install-manifest.txt"
-if [[ ! -f "$MANIFEST" ]]; then
-  echo "Error: install manifest not found: $MANIFEST" >&2
+if [[ "$GUARDRAILS" != "on" && "$GUARDRAILS" != "off" ]]; then
+  echo "Error: --guardrails must be 'on' or 'off'." >&2
   exit 1
 fi
 
@@ -69,6 +70,28 @@ fi
 
 if ! git -C "$TARGET_REPO" rev-parse --git-dir >/dev/null 2>&1; then
   echo "Error: target is not a Git repository: $TARGET_REPO" >&2
+  exit 1
+fi
+
+if [[ "$GUARDRAILS" == "off" ]]; then
+  if git -C "$TARGET_REPO" config --get core.hooksPath >/dev/null 2>&1; then
+    git -C "$TARGET_REPO" config --unset core.hooksPath
+    echo "SET    git config --unset core.hooksPath"
+  else
+    echo "INFO   Guardrails already disabled (core.hooksPath not set)."
+  fi
+  echo "DONE   Guardrails OFF for: $TARGET_REPO"
+  exit 0
+fi
+
+if [[ ! -d "$SOURCE_DIR" ]]; then
+  echo "Error: source templates dir not found: $SOURCE_DIR" >&2
+  exit 1
+fi
+
+MANIFEST="$SOURCE_DIR/install-manifest.txt"
+if [[ ! -f "$MANIFEST" ]]; then
+  echo "Error: install manifest not found: $MANIFEST" >&2
   exit 1
 fi
 
@@ -99,4 +122,4 @@ chmod +x "$TARGET_REPO/.githooks/pre-commit" "$TARGET_REPO/.githooks/pre-push" 2
 
 git -C "$TARGET_REPO" config core.hooksPath .githooks
 echo "SET    git config core.hooksPath .githooks"
-echo "DONE   Guardrail bootstrap complete for: $TARGET_REPO"
+echo "DONE   Guardrails ON for: $TARGET_REPO"

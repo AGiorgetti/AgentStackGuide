@@ -61,7 +61,7 @@ Purpose: blocks wrong-branch and non-fast-forward pushes.
 Purpose: canonical file list used by both bootstrap scripts.
 
 1. `scripts/setup-agent-guardrails.sh`
-Purpose: one-command bootstrap for Linux/macOS/Git Bash.
+Purpose: bootstrap + guardrails toggle (on/off) for Linux/macOS/Git Bash.
 
 1. `scripts/setup-agent-guardrails.ps1`
-Purpose: one-command bootstrap for PowerShell on Windows.
+Purpose: bootstrap + guardrails toggle (on/off) for PowerShell on Windows.
