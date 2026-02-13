@@ -380,7 +380,7 @@ Always fill these placeholders before sending:
 - `<Codex|Claude Code>`
 - `<assigned-branch>`
 - `<absolute-or-relative-path>`
-- `<describe objective and files/modules in scope>`
+- `<what to implement>`
 - `<list exact commands>`
 
 This contract makes human review faster and safer.
