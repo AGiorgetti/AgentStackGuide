@@ -34,6 +34,11 @@ if (-not (Test-Path $SourceDir)) {
     throw "Source templates dir not found: $SourceDir"
 }
 
+$manifestPath = Join-Path $SourceDir "install-manifest.txt"
+if (-not (Test-Path $manifestPath)) {
+    throw "Install manifest not found: $manifestPath"
+}
+
 if (-not (Test-Path $TargetRepo)) {
     throw "Target repo path not found: $TargetRepo"
 }
@@ -43,13 +48,17 @@ if ($LASTEXITCODE -ne 0) {
     throw "Target is not a Git repository: $TargetRepo"
 }
 
-Copy-TemplateFile -SourcePath (Join-Path $SourceDir "AGENT_EXECUTION_CONTRACT.md") -DestinationPath (Join-Path $TargetRepo "AGENT_EXECUTION_CONTRACT.md") -ForceOverwrite:$Force
-Copy-TemplateFile -SourcePath (Join-Path $SourceDir "AGENTS.md") -DestinationPath (Join-Path $TargetRepo "AGENTS.md") -ForceOverwrite:$Force
-Copy-TemplateFile -SourcePath (Join-Path $SourceDir "CLAUDE.md") -DestinationPath (Join-Path $TargetRepo "CLAUDE.md") -ForceOverwrite:$Force
-Copy-TemplateFile -SourcePath (Join-Path $SourceDir "AGENT_KICKOFF_PROMPT.md") -DestinationPath (Join-Path $TargetRepo "AGENT_KICKOFF_PROMPT.md") -ForceOverwrite:$Force
-Copy-TemplateFile -SourcePath (Join-Path $SourceDir ".github\copilot-instructions.md") -DestinationPath (Join-Path $TargetRepo ".github\copilot-instructions.md") -ForceOverwrite:$Force
-Copy-TemplateFile -SourcePath (Join-Path $SourceDir ".githooks\pre-commit") -DestinationPath (Join-Path $TargetRepo ".githooks\pre-commit") -ForceOverwrite:$Force
-Copy-TemplateFile -SourcePath (Join-Path $SourceDir ".githooks\pre-push") -DestinationPath (Join-Path $TargetRepo ".githooks\pre-push") -ForceOverwrite:$Force
+foreach ($rawLine in Get-Content $manifestPath) {
+    $line = $rawLine.Trim()
+    if ([string]::IsNullOrWhiteSpace($line)) { continue }
+    if ($line.StartsWith("#")) { continue }
+
+    $lineWindows = $line -replace "/", "\"
+    Copy-TemplateFile `
+        -SourcePath (Join-Path $SourceDir $lineWindows) `
+        -DestinationPath (Join-Path $TargetRepo $lineWindows) `
+        -ForceOverwrite:$Force
+}
 
 git -C $TargetRepo config core.hooksPath .githooks
 if ($LASTEXITCODE -ne 0) {

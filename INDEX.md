@@ -9,12 +9,6 @@ Purpose: full conceptual + practical walkthrough of Git worktrees with multiple 
 
 ## 2. Prepare Work Assignment
 
-1. `AGENT_TASK_TEMPLATE.md`
-Purpose: consistent task brief for each agent/worktree.
-
-1. `AGENT_INSTRUCTION_FILE.md`
-Purpose: copy/paste instruction message to send as first prompt to each agent.
-
 1. `AGENT_CONFIGURATION_GUIDE.md`
 Purpose: exact mapping of which agent uses which instruction files.
 
@@ -55,6 +49,9 @@ Purpose: blocks commits from wrong branch/worktree.
 
 1. `templates/.githooks/pre-push`
 Purpose: blocks wrong-branch and non-fast-forward pushes.
+
+1. `templates/install-manifest.txt`
+Purpose: canonical file list used by both bootstrap scripts.
 
 1. `scripts/setup-agent-guardrails.sh`
 Purpose: one-command bootstrap for Linux/macOS/Git Bash.

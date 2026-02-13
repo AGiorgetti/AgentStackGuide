@@ -102,7 +102,7 @@ git worktree add -b feat/copilot-docs ../myapp-worktrees/copilot-docs develop
 What this does:
 - Creates new branches from `develop`
 - Checks each branch out into its own folder
-- Registers both folders with Git worktree metadata
+- Registers all worktree folders with Git worktree metadata
 
 Verify:
 
@@ -193,73 +193,19 @@ Repeat with the Claude and Copilot worktree/branch values.
 
 ### 7.3 Install local guardrail hooks
 
-From repo root, install shared hooks that enforce the contract.
-You can either create them manually (below) or copy the prepared templates from `templates/.githooks/`:
+From repo root, install shared hooks from templates:
 
 ```bash
-mkdir -p .githooks
-
-cat > .githooks/pre-commit <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-git_dir="$(git rev-parse --git-dir)"
-expected_branch_file="$git_dir/agent-expected-branch"
-expected_worktree_file="$git_dir/agent-expected-worktree"
-
-[ -f "$expected_branch_file" ] || exit 0
-expected_branch="$(cat "$expected_branch_file")"
-expected_worktree="$(cat "$expected_worktree_file" 2>/dev/null || true)"
-
-current_branch="$(git symbolic-ref --short -q HEAD || true)"
-current_worktree="$(git rev-parse --show-toplevel)"
-
-if [ "$current_branch" != "$expected_branch" ]; then
-  echo "Blocked: this worktree is bound to '$expected_branch', current is '$current_branch'." >&2
-  exit 1
-fi
-
-if [ -n "$expected_worktree" ] && [ "$current_worktree" != "$expected_worktree" ]; then
-  echo "Blocked: commits are allowed only from '$expected_worktree'." >&2
-  exit 1
-fi
-EOF
-
-cat > .githooks/pre-push <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-zero="0000000000000000000000000000000000000000"
-git_dir="$(git rev-parse --git-dir)"
-expected_branch_file="$git_dir/agent-expected-branch"
-[ -f "$expected_branch_file" ] || exit 0
-
-expected_branch="$(cat "$expected_branch_file")"
-expected_remote_ref="refs/heads/$expected_branch"
-
-while read -r local_ref local_sha remote_ref remote_sha; do
-  if [ "$remote_ref" != "$expected_remote_ref" ]; then
-    echo "Blocked: this worktree can only push to '$expected_remote_ref'." >&2
-    exit 1
-  fi
-
-  if [ "$local_sha" = "$zero" ]; then
-    echo "Blocked: branch deletion push is not allowed from agent worktrees." >&2
-    exit 1
-  fi
-
-  if [ "$remote_sha" != "$zero" ]; then
-    if ! git merge-base --is-ancestor "$remote_sha" "$local_sha"; then
-      echo "Blocked: non-fast-forward push detected (force push not allowed)." >&2
-      exit 1
-    fi
-  fi
-done
-EOF
-
-chmod +x .githooks/pre-commit .githooks/pre-push
-git config core.hooksPath .githooks
+./scripts/setup-agent-guardrails.sh --target /path/to/your-repo
 ```
+
+or:
+
+```powershell
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo
+```
+
+These scripts read `templates/install-manifest.txt` so docs and installers stay in sync.
 
 What this enforces:
 - Wrong branch commit in a worktree is blocked.
@@ -322,10 +268,23 @@ Templates are provided in this guide repo:
 - `templates/.github/copilot-instructions.md`
 - `templates/.githooks/pre-commit`
 - `templates/.githooks/pre-push`
+- `templates/install-manifest.txt` (canonical install list used by bootstrap scripts)
 
 ### 7.8 Install templates in a target repo
 
-Example copy from this guide repo into another repository:
+Preferred:
+
+```bash
+./scripts/setup-agent-guardrails.sh --target /path/to/your-repo
+./scripts/setup-agent-guardrails.sh --target /path/to/your-repo --force
+```
+
+```powershell
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo
+.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo -Force
+```
+
+Manual fallback (driven by manifest):
 
 ```bash
 # GUIDE_REPO = this repository (AgentStackGuide)
@@ -333,34 +292,16 @@ Example copy from this guide repo into another repository:
 GUIDE_REPO=/path/to/AgentStackGuide
 TARGET_REPO=/path/to/your-repo
 
-cp "$GUIDE_REPO/templates/AGENT_EXECUTION_CONTRACT.md" "$TARGET_REPO/AGENT_EXECUTION_CONTRACT.md"
-cp "$GUIDE_REPO/templates/AGENTS.md" "$TARGET_REPO/AGENTS.md"
-cp "$GUIDE_REPO/templates/CLAUDE.md" "$TARGET_REPO/CLAUDE.md"
-cp "$GUIDE_REPO/templates/AGENT_KICKOFF_PROMPT.md" "$TARGET_REPO/AGENT_KICKOFF_PROMPT.md"
-mkdir -p "$TARGET_REPO/.github"
-cp "$GUIDE_REPO/templates/.github/copilot-instructions.md" "$TARGET_REPO/.github/copilot-instructions.md"
-
-mkdir -p "$TARGET_REPO/.githooks"
-cp "$GUIDE_REPO/templates/.githooks/pre-commit" "$TARGET_REPO/.githooks/pre-commit"
-cp "$GUIDE_REPO/templates/.githooks/pre-push" "$TARGET_REPO/.githooks/pre-push"
-chmod +x "$TARGET_REPO/.githooks/pre-commit" "$TARGET_REPO/.githooks/pre-push"
+while IFS= read -r relpath; do
+  [ -z "$relpath" ] && continue
+  [ "${relpath#\#}" != "$relpath" ] && continue
+  mkdir -p "$TARGET_REPO/$(dirname "$relpath")"
+  cp "$GUIDE_REPO/templates/$relpath" "$TARGET_REPO/$relpath"
+done < "$GUIDE_REPO/templates/install-manifest.txt"
 
 cd "$TARGET_REPO"
+chmod +x .githooks/pre-commit .githooks/pre-push
 git config core.hooksPath .githooks
-```
-
-Bootstrap option (recommended):
-
-```bash
-# Bash
-./scripts/setup-agent-guardrails.sh --target /path/to/your-repo
-./scripts/setup-agent-guardrails.sh --target /path/to/your-repo --force
-```
-
-```powershell
-# PowerShell
-.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo
-.\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\your-repo -Force
 ```
 
 ### 7.9 Configure Codex (per worktree)
@@ -420,22 +361,10 @@ Always fill these placeholders before sending:
 - `<what to implement>`
 - `<list exact commands>`
 
-### 7.13 Agent-to-file mapping (configuration guide)
+### 7.13 Agent-to-file mapping
 
-Use this mapping in each target repo:
-
-- Codex:
-  - reads `AGENTS.md`
-  - must obey `AGENT_EXECUTION_CONTRACT.md`
-  - receives runtime task message from `AGENT_KICKOFF_PROMPT.md`
-- Claude Code:
-  - reads `CLAUDE.md`
-  - must obey `AGENT_EXECUTION_CONTRACT.md`
-  - receives runtime task message from `AGENT_KICKOFF_PROMPT.md`
-- GitHub Copilot:
-  - reads `.github/copilot-instructions.md` (canonical)
-  - must obey `AGENT_EXECUTION_CONTRACT.md`
-  - receives runtime task message from `AGENT_KICKOFF_PROMPT.md`
+Canonical mapping is maintained in:
+- `AGENT_CONFIGURATION_GUIDE.md`
 
 This contract makes human review faster and safer.
 
@@ -443,83 +372,27 @@ This contract makes human review faster and safer.
 
 ## 8. Human Review Workflow
 
-After agents finish, the human performs review before any merge.
+After agents finish, run the full checklist in:
+- `REVIEW_CHECKLIST.md`
 
-### 8.1 Inspect branch changes
-
-From primary repo:
+Minimal pre-check:
 
 ```bash
 git fetch --all --prune
-git log --oneline --decorate develop..feat/codex-fix-auth
-git log --oneline --decorate develop..feat/claude-add-metrics
-git log --oneline --decorate develop..feat/copilot-docs
+git log --oneline --decorate develop..feat/<agent>-<task>
+git diff --stat develop..feat/<agent>-<task>
 ```
-
-Review diff quality:
-
-```bash
-git diff --stat develop..feat/codex-fix-auth
-git diff --stat develop..feat/claude-add-metrics
-git diff --stat develop..feat/copilot-docs
-```
-
-### 8.2 Check out each worktree and validate
-
-```bash
-cd ../myapp-worktrees/codex-fix-auth
-# run tests/lint/build for your stack
-
-cd ../myapp-worktrees/claude-add-metrics
-# run tests/lint/build for your stack
-
-cd ../myapp-worktrees/copilot-docs
-# run tests/lint/build for your stack
-```
-
-### 8.3 Review checklist
-
-- Correctness: Does it solve the stated task?
-- Scope: Any unrelated changes?
-- Safety: Any security/perf regressions?
-- Maintainability: Clear code and tests?
-- Compatibility: No breaking changes unless intended?
 
 ---
 
 ## 9. Decision Point: Merge or Discard
 
-### Option A: Merge accepted work
+Use the canonical procedures in:
+- `REVIEW_CHECKLIST.md`
 
-If branch is good:
-
-```bash
-cd ~/src/myapp
-git checkout develop
-git pull --ff-only
-git merge --no-ff feat/codex-fix-auth
-git push origin develop
-```
-
-Repeat for other accepted branches.
-
-If using pull requests, open PR instead and merge via platform UI.
-
-### Option B: Discard rejected work
-
-If branch is not acceptable:
-
-```bash
-cd ~/src/myapp
-git worktree remove ../myapp-worktrees/claude-add-metrics
-git branch -D feat/claude-add-metrics
-```
-
-If remote branch exists:
-
-```bash
-git push origin --delete feat/claude-add-metrics
-```
+Quick rule:
+- Merge if review + validation pass.
+- Discard if out-of-scope or unstable after revision.
 
 ---
 
@@ -547,7 +420,6 @@ Then ensure only active worktrees remain.
 For 3+ agents, standardize:
 - Branch naming: `feat/<agent>-<task>`
 - Folder naming: `<agent>-<task>`
-- Task template (see `AGENT_TASK_TEMPLATE.md`)
 - Human review checklist (see `REVIEW_CHECKLIST.md`)
 
 Practical orchestration tips:
@@ -633,8 +505,6 @@ git worktree prune
 ```
 
 For reusable prompts and review standards, see:
-- `AGENT_TASK_TEMPLATE.md`
-- `AGENT_INSTRUCTION_FILE.md`
 - `AGENT_CONFIGURATION_GUIDE.md`
 - `REVIEW_CHECKLIST.md`
 - `QUICKSTART_COMMANDS.md`
@@ -646,3 +516,4 @@ For reusable prompts and review standards, see:
 - `templates/.github/copilot-instructions.md`
 - `templates/.githooks/pre-commit`
 - `templates/.githooks/pre-push`
+- `templates/install-manifest.txt`

@@ -1,6 +1,6 @@
 # Agent Configuration Guide
 
-This guide defines which instruction files are used by each agent and which ones are optional.
+This guide is the canonical mapping for which instruction files each agent uses.
 
 ## Required Files (All Repos)
 
@@ -36,4 +36,5 @@ Use bootstrap scripts:
 .\scripts\setup-agent-guardrails.ps1 -TargetRepo C:\path\to\repo
 ```
 
-Optional compatibility file:
+Installer source of truth:
+- `templates/install-manifest.txt`

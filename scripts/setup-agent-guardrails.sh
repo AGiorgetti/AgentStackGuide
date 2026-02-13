@@ -56,6 +56,12 @@ if [[ ! -d "$SOURCE_DIR" ]]; then
   exit 1
 fi
 
+MANIFEST="$SOURCE_DIR/install-manifest.txt"
+if [[ ! -f "$MANIFEST" ]]; then
+  echo "Error: install manifest not found: $MANIFEST" >&2
+  exit 1
+fi
+
 if [[ ! -d "$TARGET_REPO" ]]; then
   echo "Error: target repo path not found: $TARGET_REPO" >&2
   exit 1
@@ -81,13 +87,13 @@ copy_file() {
   echo "COPY   $dst"
 }
 
-copy_file "$SOURCE_DIR/AGENT_EXECUTION_CONTRACT.md" "$TARGET_REPO/AGENT_EXECUTION_CONTRACT.md"
-copy_file "$SOURCE_DIR/AGENTS.md" "$TARGET_REPO/AGENTS.md"
-copy_file "$SOURCE_DIR/CLAUDE.md" "$TARGET_REPO/CLAUDE.md"
-copy_file "$SOURCE_DIR/AGENT_KICKOFF_PROMPT.md" "$TARGET_REPO/AGENT_KICKOFF_PROMPT.md"
-copy_file "$SOURCE_DIR/.github/copilot-instructions.md" "$TARGET_REPO/.github/copilot-instructions.md"
-copy_file "$SOURCE_DIR/.githooks/pre-commit" "$TARGET_REPO/.githooks/pre-commit"
-copy_file "$SOURCE_DIR/.githooks/pre-push" "$TARGET_REPO/.githooks/pre-push"
+while IFS= read -r relpath || [[ -n "$relpath" ]]; do
+  relpath="${relpath#"${relpath%%[![:space:]]*}"}"
+  relpath="${relpath%"${relpath##*[![:space:]]}"}"
+  [[ -z "$relpath" || "${relpath:0:1}" == "#" ]] && continue
+
+  copy_file "$SOURCE_DIR/$relpath" "$TARGET_REPO/$relpath"
+done < "$MANIFEST"
 
 chmod +x "$TARGET_REPO/.githooks/pre-commit" "$TARGET_REPO/.githooks/pre-push" 2>/dev/null || true
 
