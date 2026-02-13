@@ -9,7 +9,7 @@ Use this template when assigning a task to an agent in a dedicated worktree.
 - Agent: `Codex` or `Claude Code`
 - Branch: `feat/<agent>-<task>`
 - Worktree path: `../<repo>-worktrees/<agent>-<task>`
-- Base branch: `main`
+- Base branch: `develop`
 - Deadline: `<date/time>`
 
 ---

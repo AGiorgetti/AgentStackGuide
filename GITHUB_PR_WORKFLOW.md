@@ -12,7 +12,7 @@ Use one worktree per agent task, then promote changes through GitHub PRs with re
 
 ## 2. Branch Protection Baseline (GitHub)
 
-In GitHub repository settings for `main`:
+In GitHub repository settings for `develop`:
 
 - Require a pull request before merging
 - Require approvals (for example, at least 1)
@@ -37,8 +37,8 @@ From repo root:
 git fetch --all --prune
 mkdir -p ../myapp-worktrees
 
-git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth main
-git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics main
+git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth develop
+git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics develop
 ```
 
 ---
@@ -78,7 +78,7 @@ cd ../myapp-worktrees/claude-add-metrics
 git push -u origin feat/claude-add-metrics
 ```
 
-Open PRs targeting `main`.
+Open PRs targeting `develop`.
 
 PR template should include:
 - task objective
@@ -94,7 +94,7 @@ For each PR:
 
 1. Review code and commit history.
 2. Confirm CI required checks all pass.
-3. Confirm PR is up to date with `main` (if required).
+3. Confirm PR is up to date with `develop` (if required).
 4. Approve or request changes.
 
 If branch is behind:
@@ -102,7 +102,7 @@ If branch is behind:
 ```bash
 cd ../myapp-worktrees/codex-fix-auth
 git fetch origin
-git rebase origin/main
+git rebase origin/develop
 git push --force-with-lease
 ```
 

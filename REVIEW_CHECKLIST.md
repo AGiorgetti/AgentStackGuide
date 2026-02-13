@@ -6,15 +6,15 @@ Use this checklist before merging any agent-produced branch.
 
 ## 1. Branch Hygiene
 
-- [ ] Branch targets correct base (`main` or agreed release branch)
+- [ ] Branch targets correct base (`develop` or agreed release/hotfix branch)
 - [ ] Branch contains only task-related commits
 - [ ] No accidental secrets or environment file changes
 
 Commands:
 
 ```bash
-git log --oneline --decorate main..feat/<agent>-<task>
-git diff --stat main..feat/<agent>-<task>
+git log --oneline --decorate develop..feat/<agent>-<task>
+git diff --stat develop..feat/<agent>-<task>
 ```
 
 ---
@@ -65,10 +65,10 @@ Discard if:
 ## 6. Merge Procedure
 
 ```bash
-git checkout main
+git checkout develop
 git pull --ff-only
 git merge --no-ff feat/<agent>-<task>
-git push origin main
+git push origin develop
 ```
 
 After merge:

@@ -40,7 +40,7 @@ Using one worktree per agent gives you:
 
 ## 3. Recommended Directory Layout
 
-Assume your main repo is here:
+Assume your primary repo is here:
 
 ```text
 ~/src/myapp
@@ -54,13 +54,13 @@ Create a sibling directory for worktrees:
   claude-add-metrics/
 ```
 
-This keeps your main repo clean and makes cleanup easier.
+This keeps your primary repo clean and makes cleanup easier.
 
 ---
 
 ## 4. One-Time Setup
 
-Run in your main repo root:
+Run in your primary repo root:
 
 ```bash
 git fetch --all --prune
@@ -69,7 +69,7 @@ git status
 
 Make sure:
 - Working tree is clean (or intentionally dirty)
-- You know your base branch (`main` used below)
+- You know your base branch (`develop` used below)
 
 Optional quality-of-life aliases:
 
@@ -87,17 +87,17 @@ git config alias.wtl "worktree list"
 - Task A for Codex: fix auth retry bug
 - Task B for Claude Code: add request metrics
 
-From the main repo root:
+From the primary repo root:
 
 ```bash
 mkdir -p ../myapp-worktrees
 
-git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth main
-git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics main
+git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth develop
+git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics develop
 ```
 
 What this does:
-- Creates new branches from `main`
+- Creates new branches from `develop`
 - Checks each branch out into its own folder
 - Registers both folders with Git worktree metadata
 
@@ -254,7 +254,7 @@ What this enforces:
 ### 7.4 Rebase and update policy
 
 Allowed:
-- Rebase or merge only the current agent branch onto `main`.
+- Rebase or merge only the current agent branch onto `develop`.
 
 Not allowed:
 - Rebasing/cherry-picking other agent branches.
@@ -265,7 +265,7 @@ Safe sync example:
 ```bash
 cd ../myapp-worktrees/codex-fix-auth
 git fetch origin
-git rebase origin/main
+git rebase origin/develop
 ```
 
 ### 7.5 Prompt guardrails for every agent run
@@ -393,19 +393,19 @@ After agents finish, the human performs review before any merge.
 
 ### 8.1 Inspect branch changes
 
-From main repo:
+From primary repo:
 
 ```bash
 git fetch --all --prune
-git log --oneline --decorate main..feat/codex-fix-auth
-git log --oneline --decorate main..feat/claude-add-metrics
+git log --oneline --decorate develop..feat/codex-fix-auth
+git log --oneline --decorate develop..feat/claude-add-metrics
 ```
 
 Review diff quality:
 
 ```bash
-git diff --stat main..feat/codex-fix-auth
-git diff --stat main..feat/claude-add-metrics
+git diff --stat develop..feat/codex-fix-auth
+git diff --stat develop..feat/claude-add-metrics
 ```
 
 ### 8.2 Check out each worktree and validate
@@ -436,10 +436,10 @@ If branch is good:
 
 ```bash
 cd ~/src/myapp
-git checkout main
+git checkout develop
 git pull --ff-only
 git merge --no-ff feat/codex-fix-auth
-git push origin main
+git push origin develop
 ```
 
 Repeat for other accepted branches.
@@ -494,7 +494,7 @@ For 3+ agents, standardize:
 Practical orchestration tips:
 - Keep tasks independent to reduce merge conflicts
 - Prefer smaller task slices (1-3 hours each)
-- Merge frequently to reduce branch drift from `main`
+- Merge frequently to reduce branch drift from `develop`
 
 ---
 
@@ -503,7 +503,7 @@ Practical orchestration tips:
 If two agent branches touch same files:
 
 1. Pick one branch to merge first.
-2. Rebase or merge `main` into the second branch.
+2. Rebase or merge `develop` into the second branch.
 3. Resolve conflicts manually (human-owned).
 4. Re-run validation.
 5. Merge second branch.
@@ -515,21 +515,21 @@ Do not ask both agents to auto-resolve the same conflict blindly.
 ## 13. End-to-End Example Script
 
 ```bash
-# from main repo
+# from primary repo
 git fetch --all --prune
 mkdir -p ../myapp-worktrees
 
 # create two agent worktrees
-git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth main
-git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics main
+git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth develop
+git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metrics develop
 
 # ...agents work in their folders and commit...
 
 # human review and merge one
-git checkout main
+git checkout develop
 git pull --ff-only
 git merge --no-ff feat/codex-fix-auth
-git push origin main
+git push origin develop
 
 # discard the other
 git worktree remove ../myapp-worktrees/claude-add-metrics
@@ -557,8 +557,8 @@ git worktree prune
 # list worktrees
 git worktree list
 
-# create new worktree + branch from main
-git worktree add -b feat/task-name ../path/to/wt main
+# create new worktree + branch from develop
+git worktree add -b feat/task-name ../path/to/wt develop
 
 # remove worktree
 git worktree remove ../path/to/wt

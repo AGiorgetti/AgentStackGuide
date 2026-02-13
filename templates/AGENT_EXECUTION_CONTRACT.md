@@ -38,7 +38,7 @@ Not allowed:
 ## Rebase Policy
 
 Allowed:
-- Rebase assigned branch onto `origin/main` (or assigned base branch).
+- Rebase assigned branch onto `origin/develop` (or assigned base branch).
 
 Not allowed:
 - Rebase/cherry-pick another agent branch.

@@ -8,7 +8,7 @@ Use this when you want the shortest path from idea to merge/discard.
 
 ```bash
 # run from repo root
-export BASE=main
+export BASE=develop
 export WT_ROOT=../myapp-worktrees
 export TASK1=codex-fix-auth
 export TASK2=claude-add-metrics

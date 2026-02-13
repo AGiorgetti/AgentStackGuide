@@ -69,5 +69,5 @@ git worktree add -b <new-branch> <worktree-path> <start-point>
 Example:
 
 ```bash
-git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth main
+git worktree add -b feat/codex-fix-auth ../myapp-worktrees/codex-fix-auth develop
 ```
