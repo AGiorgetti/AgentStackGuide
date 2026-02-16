@@ -6,8 +6,8 @@ This guide is the canonical mapping for which instruction files each agent uses.
 
 - `AGENT_EXECUTION_CONTRACT.md`
 - `AGENT_KICKOFF_PROMPT.md`
-- `.githooks/pre-commit`
-- `.githooks/pre-push`
+- `.git/hooks/pre-commit`
+- `.git/hooks/pre-push`
 
 ## Agent-to-File Mapping
 

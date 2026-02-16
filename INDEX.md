@@ -51,11 +51,11 @@ Purpose: reusable first-message template for all agents.
 1. `templates/.github/copilot-instructions.md`
 Purpose: canonical GitHub Copilot repository instruction file.
 
-1. `templates/.githooks/pre-commit`
-Purpose: blocks commits from wrong branch/worktree.
+1. `templates/.githooks/pre-commit` (installed to `.git/hooks/pre-commit`)
+Purpose: hook template installed to .git/hooks/pre-commit; blocks commits from wrong branch/worktree.
 
-1. `templates/.githooks/pre-push`
-Purpose: blocks wrong-branch and non-fast-forward pushes.
+1. `templates/.githooks/pre-push` (installed to `.git/hooks/pre-push`)
+Purpose: hook template installed to .git/hooks/pre-push; blocks wrong-branch and non-fast-forward pushes.
 
 1. `templates/install-manifest.txt`
 Purpose: canonical file list used by both bootstrap scripts.

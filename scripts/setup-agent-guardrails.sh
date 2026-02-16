@@ -5,6 +5,7 @@ usage() {
   cat <<'EOF'
 Usage:
   setup-agent-guardrails.sh --target <target-repo> [--guardrails <on|off>] [--source <templates-dir>] [--force]
+  setup-agent-guardrails.sh  # interactive mode
 
 Options:
   --target   Path to target Git repository (required)
@@ -21,6 +22,37 @@ SOURCE_DIR="$SCRIPT_DIR/../templates"
 TARGET_REPO=""
 FORCE=0
 GUARDRAILS="on"
+
+interactive_mode() {
+  echo "Interactive mode."
+  read -r -p "Enable guardrails? (y/n): " yn
+  if [[ "$yn" =~ ^[Yy]$ ]]; then
+    GUARDRAILS="on"
+  elif [[ "$yn" =~ ^[Nn]$ ]]; then
+    GUARDRAILS="off"
+  else
+    echo "CANCEL User cancelled guardrails setup."
+    exit 0
+  fi
+
+  read -r -p "Target Git repository path: " TARGET_REPO
+  if [[ -z "$TARGET_REPO" ]]; then
+    echo "CANCEL No repo selected."
+    exit 0
+  fi
+
+  if [[ "$GUARDRAILS" == "on" ]]; then
+    read -r -p "Templates folder [$SOURCE_DIR]: " source_input
+    if [[ -n "$source_input" ]]; then
+      SOURCE_DIR="$source_input"
+    fi
+
+    read -r -p "Overwrite existing files? (y/n): " yn_force
+    if [[ "$yn_force" =~ ^[Yy]$ ]]; then
+      FORCE=1
+    fi
+  fi
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -53,9 +85,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$TARGET_REPO" ]]; then
-  echo "Error: --target is required." >&2
-  usage
-  exit 1
+  interactive_mode
 fi
 
 if [[ "$GUARDRAILS" != "on" && "$GUARDRAILS" != "off" ]]; then
@@ -74,12 +104,37 @@ if ! git -C "$TARGET_REPO" rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 if [[ "$GUARDRAILS" == "off" ]]; then
-  if git -C "$TARGET_REPO" config --get core.hooksPath >/dev/null 2>&1; then
-    git -C "$TARGET_REPO" config --unset core.hooksPath
-    echo "SET    git config --unset core.hooksPath"
-  else
-    echo "INFO   Guardrails already disabled (core.hooksPath not set)."
+  if [[ ! -d "$SOURCE_DIR" ]]; then
+    echo "INFO   Source templates dir not found; skipping hook removal."
+    echo "DONE   Guardrails OFF for: $TARGET_REPO"
+    exit 0
   fi
+
+  MANIFEST="$SOURCE_DIR/install-manifest.txt"
+  if [[ ! -f "$MANIFEST" ]]; then
+    echo "INFO   Install manifest not found; skipping hook removal."
+    echo "DONE   Guardrails OFF for: $TARGET_REPO"
+    exit 0
+  fi
+
+  while IFS= read -r relpath || [[ -n "$relpath" ]]; do
+    relpath="${relpath#"${relpath%%[![:space:]]*}"}"
+    relpath="${relpath%"${relpath##*[![:space:]]}"}"
+    [[ -z "$relpath" || "${relpath:0:1}" == "#" ]] && continue
+    [[ "$relpath" != .githooks/* ]] && continue
+
+    src="$SOURCE_DIR/$relpath"
+    dest="$TARGET_REPO/.git/hooks/${relpath#.githooks/}"
+    if [[ -f "$dest" && -f "$src" ]]; then
+      if cmp -s "$src" "$dest"; then
+        rm -f "$dest"
+        echo "REMOVE $dest"
+      else
+        echo "SKIP   $dest (exists, not a guardrails hook)"
+      fi
+    fi
+  done < "$MANIFEST"
+
   echo "DONE   Guardrails OFF for: $TARGET_REPO"
   exit 0
 fi
@@ -114,12 +169,13 @@ while IFS= read -r relpath || [[ -n "$relpath" ]]; do
   relpath="${relpath#"${relpath%%[![:space:]]*}"}"
   relpath="${relpath%"${relpath##*[![:space:]]}"}"
   [[ -z "$relpath" || "${relpath:0:1}" == "#" ]] && continue
+  dest_rel="$relpath"
+  if [[ "$relpath" == .githooks/* ]]; then
+    dest_rel=".git/hooks/${relpath#.githooks/}"
+  fi
 
-  copy_file "$SOURCE_DIR/$relpath" "$TARGET_REPO/$relpath"
+  copy_file "$SOURCE_DIR/$relpath" "$TARGET_REPO/$dest_rel"
 done < "$MANIFEST"
 
-chmod +x "$TARGET_REPO/.githooks/pre-commit" "$TARGET_REPO/.githooks/pre-push" 2>/dev/null || true
-
-git -C "$TARGET_REPO" config core.hooksPath .githooks
-echo "SET    git config core.hooksPath .githooks"
+chmod +x "$TARGET_REPO/.git/hooks/pre-commit" "$TARGET_REPO/.git/hooks/pre-push" 2>/dev/null || true
 echo "DONE   Guardrails ON for: $TARGET_REPO"

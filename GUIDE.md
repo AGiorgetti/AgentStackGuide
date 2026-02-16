@@ -200,9 +200,9 @@ Guardrails are two layers:
   - `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`
   - `AGENT_KICKOFF_PROMPT.md`
 - Technical guardrails:
-  - `.githooks/pre-commit`: blocks wrong-branch/wrong-worktree commits
-  - `.githooks/pre-push`: blocks push to wrong branch and non-fast-forward push
-  - `core.hooksPath=.githooks`: activates hooks in the repo
+   - `.git/hooks/pre-commit`: blocks wrong-branch/wrong-worktree commits
+   - `.git/hooks/pre-push`: blocks push to wrong branch and non-fast-forward push
+   - Hooks are installed into the default Git hooks path by the bootstrap scripts
 
 Recommended default:
 - Guardrails ON for any shared repo or branch intended for review/merge.
@@ -286,8 +286,8 @@ Add these files for shared and per-agent instruction loading:
 - `CLAUDE.md` (Claude Code instructions)
 - `.github/copilot-instructions.md` (GitHub Copilot canonical repo instructions)
 - `AGENT_KICKOFF_PROMPT.md` (shared kickoff prompt file sent to all agents)
-- `.githooks/pre-commit`
-- `.githooks/pre-push`
+- `.git/hooks/pre-commit`
+- `.git/hooks/pre-push`
 
 Templates are provided in this guide repo:
 - `templates/AGENT_EXECUTION_CONTRACT.md`
@@ -295,8 +295,8 @@ Templates are provided in this guide repo:
 - `templates/CLAUDE.md`
 - `templates/AGENT_KICKOFF_PROMPT.md`
 - `templates/.github/copilot-instructions.md`
-- `templates/.githooks/pre-commit`
-- `templates/.githooks/pre-push`
+- `templates/.githooks/pre-commit` (installed to `.git/hooks/pre-commit`)
+- `templates/.githooks/pre-push` (installed to `.git/hooks/pre-push`)
 - `templates/install-manifest.txt` (canonical install list used by bootstrap scripts)
 
 ### 7.9 Install templates in a target repo
@@ -324,13 +324,16 @@ TARGET_REPO=/path/to/your-repo
 while IFS= read -r relpath; do
   [ -z "$relpath" ] && continue
   [ "${relpath#\#}" != "$relpath" ] && continue
-  mkdir -p "$TARGET_REPO/$(dirname "$relpath")"
-  cp "$GUIDE_REPO/templates/$relpath" "$TARGET_REPO/$relpath"
+   dest="$relpath"
+   if [ "${relpath#.githooks/}" != "$relpath" ]; then
+      dest=".git/hooks/${relpath#.githooks/}"
+   fi
+   mkdir -p "$TARGET_REPO/$(dirname "$dest")"
+   cp "$GUIDE_REPO/templates/$relpath" "$TARGET_REPO/$dest"
 done < "$GUIDE_REPO/templates/install-manifest.txt"
 
 cd "$TARGET_REPO"
-chmod +x .githooks/pre-commit .githooks/pre-push
-git config core.hooksPath .githooks
+chmod +x .git/hooks/pre-commit .git/hooks/pre-push
 ```
 
 ### 7.10 Configure Codex (per worktree)
@@ -543,6 +546,6 @@ For reusable prompts and review standards, see:
 - `templates/CLAUDE.md`
 - `templates/AGENT_KICKOFF_PROMPT.md`
 - `templates/.github/copilot-instructions.md`
-- `templates/.githooks/pre-commit`
-- `templates/.githooks/pre-push`
+- `templates/.githooks/pre-commit` (installed to `.git/hooks/pre-commit`)
+- `templates/.githooks/pre-push` (installed to `.git/hooks/pre-push`)
 - `templates/install-manifest.txt`

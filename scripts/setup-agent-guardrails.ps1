@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [string]$TargetRepo,
     [string]$SourceDir = (Join-Path $PSScriptRoot "..\templates"),
     [ValidateSet("on", "off")]
@@ -32,6 +32,88 @@ function Copy-TemplateFile {
     Write-Host "COPY   $DestinationPath"
 }
 
+function Get-ManifestLines {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ManifestPath
+    )
+
+    foreach ($rawLine in Get-Content $ManifestPath) {
+        $line = $rawLine.Trim()
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        if ($line.StartsWith("#")) { continue }
+        $line
+    }
+}
+
+function Resolve-DestinationPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TargetRepoPath,
+        [Parameter(Mandatory = $true)]
+        [string]$RelativePath
+    )
+
+    if ($RelativePath.StartsWith(".githooks/")) {
+        $hookSuffix = $RelativePath.Substring(".githooks/".Length)
+        return (Join-Path $TargetRepoPath (Join-Path ".git\hooks" $hookSuffix))
+    }
+
+    $lineWindows = $RelativePath -replace "/", "\"
+    return (Join-Path $TargetRepoPath $lineWindows)
+}
+
+function Prompt-GuardrailsInput {
+    Write-Host "Interactive mode."
+
+    $guardrailsInput = Read-Host "Enable guardrails? (y/n)"
+    if ($guardrailsInput -match "^[Yy]") {
+        $guardrailsValue = "on"
+    }
+    elseif ($guardrailsInput -match "^[Nn]") {
+        $guardrailsValue = "off"
+    }
+    else {
+        Write-Host "CANCEL User cancelled guardrails setup."
+        exit 0
+    }
+
+    $repoInput = Read-Host "Target Git repository path"
+    if ([string]::IsNullOrWhiteSpace($repoInput)) {
+        Write-Host "CANCEL No repo selected."
+        exit 0
+    }
+
+    $selection = @{
+        Guardrails = $guardrailsValue
+        TargetRepo = $repoInput
+        SourceDir = $SourceDir
+        Force = $false
+    }
+
+    if ($guardrailsValue -eq "on") {
+        $sourceInput = Read-Host "Templates folder [$SourceDir]"
+        if (-not [string]::IsNullOrWhiteSpace($sourceInput)) {
+            $selection.SourceDir = $sourceInput
+        }
+
+        $forceInput = Read-Host "Overwrite existing files? (y/n)"
+        if ($forceInput -match "^[Yy]") {
+            $selection.Force = $true
+        }
+    }
+
+    return $selection
+}
+
+if (-not $TargetRepo) {
+    $promptSelection = Prompt-GuardrailsInput
+    $TargetRepo = $promptSelection.TargetRepo
+    $Guardrails = $promptSelection.Guardrails
+    $SourceDir = $promptSelection.SourceDir
+    $Force = $promptSelection.Force
+}
+
 if (-not (Test-Path $TargetRepo)) {
     throw "Target repo path not found: $TargetRepo"
 }
@@ -42,16 +124,38 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 if ($Guardrails -eq "off") {
-    git -C $TargetRepo config --get core.hooksPath | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        git -C $TargetRepo config --unset core.hooksPath
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to unset core.hooksPath in target repo."
-        }
-        Write-Host "SET    git config --unset core.hooksPath"
+    if (-not (Test-Path $SourceDir)) {
+        Write-Host "INFO   Source templates dir not found; skipping hook removal."
+        Write-Host "DONE   Guardrails OFF for: $TargetRepo"
+        return
     }
-    else {
-        Write-Host "INFO   Guardrails already disabled (core.hooksPath not set)."
+
+    $manifestPath = Join-Path $SourceDir "install-manifest.txt"
+    if (-not (Test-Path $manifestPath)) {
+        Write-Host "INFO   Install manifest not found; skipping hook removal."
+        Write-Host "DONE   Guardrails OFF for: $TargetRepo"
+        return
+    }
+
+    foreach ($line in Get-ManifestLines -ManifestPath $manifestPath) {
+        if (-not $line.StartsWith(".githooks/")) { continue }
+        $sourcePath = Join-Path $SourceDir ($line -replace "/", "\")
+        $destinationPath = Resolve-DestinationPath -TargetRepoPath $TargetRepo -RelativePath $line
+        if (-not (Test-Path $destinationPath)) { continue }
+        if (-not (Test-Path $sourcePath)) {
+            Write-Host "INFO   Template missing; leaving $destinationPath"
+            continue
+        }
+
+        $sourceContent = Get-Content -Raw -Path $sourcePath
+        $destContent = Get-Content -Raw -Path $destinationPath
+        if ($sourceContent -eq $destContent) {
+            Remove-Item -Path $destinationPath -Force
+            Write-Host "REMOVE $destinationPath"
+        }
+        else {
+            Write-Host "SKIP   $destinationPath (exists, not a guardrails hook)"
+        }
     }
 
     Write-Host "DONE   Guardrails OFF for: $TargetRepo"
@@ -71,18 +175,9 @@ foreach ($rawLine in Get-Content $manifestPath) {
     $line = $rawLine.Trim()
     if ([string]::IsNullOrWhiteSpace($line)) { continue }
     if ($line.StartsWith("#")) { continue }
-
-    $lineWindows = $line -replace "/", "\"
     Copy-TemplateFile `
-        -SourcePath (Join-Path $SourceDir $lineWindows) `
-        -DestinationPath (Join-Path $TargetRepo $lineWindows) `
+        -SourcePath (Join-Path $SourceDir ($line -replace "/", "\")) `
+        -DestinationPath (Resolve-DestinationPath -TargetRepoPath $TargetRepo -RelativePath $line) `
         -ForceOverwrite:$Force
 }
-
-git -C $TargetRepo config core.hooksPath .githooks
-if ($LASTEXITCODE -ne 0) {
-    throw "Failed to set core.hooksPath in target repo."
-}
-
-Write-Host "SET    git config core.hooksPath .githooks"
 Write-Host "DONE   Guardrails ON for: $TargetRepo"
