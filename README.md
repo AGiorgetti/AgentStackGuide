@@ -26,7 +26,10 @@ The guide focuses on:
 3. Install templates with:
    - `scripts/setup-agent-guardrails.sh`
    - `scripts/setup-agent-guardrails.ps1`
-4. Keep guardrails `on` by default; switch `off` only for local experiments.
+
+Installer behavior: if a repository already has hooks, the installer will back them up to `.git/hooks/<hook>.orig` and install a dispatcher that runs guardrails checks first and then the original hook.
+
+4. Keep guardrails `on` by default; switch `off` only for local experiments only.
 
 ## Scope
 

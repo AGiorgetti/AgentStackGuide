@@ -203,10 +203,7 @@ Guardrails are two layers:
    - `.git/hooks/pre-commit`: blocks wrong-branch/wrong-worktree commits
    - `.git/hooks/pre-push`: blocks push to wrong branch and non-fast-forward push
    - Hooks are installed into the default Git hooks path by the bootstrap scripts
-
-Recommended default:
-- Guardrails ON for any shared repo or branch intended for review/merge.
-
+  - Installer preserves existing hooks: any pre-existing hook is backed up to `.git/hooks/<hook>.orig` and a dispatcher is installed at `.git/hooks/<hook>` which runs the guardrails check then the original hook (if present)
 Optional:
 - Guardrails OFF for local experiments or throwaway branches only.
 
@@ -235,6 +232,12 @@ Guardrails OFF:
 ```
 
 These scripts read `templates/install-manifest.txt` so docs and installers stay in sync.
+
+Installer behavior when hooks exist:
+
+- If a hook already exists in `.git/hooks/<hook>`, the installer will back it up to `.git/hooks/<hook>.orig` and install a dispatcher at `.git/hooks/<hook>` that runs the guardrails checks (`agent-guardrails-<hook>`) and then the backed-up original hook.
+- If the existing hook exactly matches the guardrails template, it will be treated as the guardrails hook and the installer will only add the separate `agent-guardrails-<hook>` file.
+- Turning guardrails OFF will restore `.git/hooks/<hook>.orig` if present, and remove guardrails files that match the templates.
 
 What technical guardrails enforce:
 - Wrong-branch commit in a worktree is blocked.

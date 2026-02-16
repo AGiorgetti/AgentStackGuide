@@ -52,7 +52,7 @@ Purpose: reusable first-message template for all agents.
 Purpose: canonical GitHub Copilot repository instruction file.
 
 1. `templates/.githooks/pre-commit` (installed to `.git/hooks/pre-commit`)
-Purpose: hook template installed to .git/hooks/pre-commit; blocks commits from wrong branch/worktree.
+Purpose: hook template installed to .git/hooks/pre-commit; blocks commits from wrong branch/worktree. Installer will back up any existing hook to `.git/hooks/pre-commit.orig` and install a dispatcher so the guardrails run before the original hook.
 
 1. `templates/.githooks/pre-push` (installed to `.git/hooks/pre-push`)
 Purpose: hook template installed to .git/hooks/pre-push; blocks wrong-branch and non-fast-forward pushes.

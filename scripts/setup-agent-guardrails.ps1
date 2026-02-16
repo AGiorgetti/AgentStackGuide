@@ -62,7 +62,100 @@ function Resolve-DestinationPath {
     $lineWindows = $RelativePath -replace "/", "\"
     return (Join-Path $TargetRepoPath $lineWindows)
 }
+function Install-Hook {
+    param(
+        [Parameter(Mandatory = $true)] [string]$SourcePath,
+        [Parameter(Mandatory = $true)] [string]$DestinationHookPath,
+        [switch]$ForceOverwrite
+    )
 
+    $hookName = Split-Path -Leaf $DestinationHookPath
+    $hooksDir = Split-Path -Parent $DestinationHookPath
+    $agentHook = Join-Path $hooksDir ("agent-guardrails-" + $hookName)
+    $origHook = "$DestinationHookPath.orig"
+
+    if (-not (Test-Path $hooksDir)) {
+        New-Item -ItemType Directory -Path $hooksDir -Force | Out-Null
+    }
+
+    if (Test-Path $DestinationHookPath) {
+        $destContent = Get-Content -Raw -Path $DestinationHookPath
+        $srcContent = Get-Content -Raw -Path $SourcePath
+        if ($destContent -eq $srcContent) {
+            Copy-TemplateFile -SourcePath $SourcePath -DestinationPath $agentHook -ForceOverwrite:$ForceOverwrite
+            return
+        }
+
+        if (-not (Test-Path $origHook)) {
+            Move-Item -Path $DestinationHookPath -Destination $origHook -Force
+            Write-Host "BACKUP $origHook"
+        }
+        else {
+            Write-Host "INFO   backup exists: $origHook"
+        }
+    }
+
+    Copy-TemplateFile -SourcePath $SourcePath -DestinationPath $agentHook -ForceOverwrite:$ForceOverwrite
+
+    $dispatcher = @"
+#!/usr/bin/env bash
+set -euo pipefail
+HOOKDIR="
+`$(dirname "`$0")`"
+"`$HOOKDIR/agent-guardrails-$hookName" "`$@" || exit `$?
+if [ -x "`$HOOKDIR/$hookName.orig" ]; then
+  "`$HOOKDIR/$hookName.orig" "`$@" || exit `$?
+fi
+exit 0
+"@
+    $dispatcher | Out-File -FilePath $DestinationHookPath -Encoding utf8 -Force
+    Write-Host "DISPATCH $DestinationHookPath"
+}
+
+function Uninstall-Hook {
+    param(
+        [Parameter(Mandatory = $true)] [string]$SourcePath,
+        [Parameter(Mandatory = $true)] [string]$DestinationHookPath
+    )
+
+    $hookName = Split-Path -Leaf $DestinationHookPath
+    $hooksDir = Split-Path -Parent $DestinationHookPath
+    $agentHook = Join-Path $hooksDir ("agent-guardrails-" + $hookName)
+    $origHook = "$DestinationHookPath.orig"
+
+    if (-not (Test-Path $DestinationHookPath)) { return }
+
+    $destContent = Get-Content -Raw -Path $DestinationHookPath
+    if ($destContent -match "agent-guardrails-$hookName") {
+        if (Test-Path $origHook) {
+            Move-Item -Path $origHook -Destination $DestinationHookPath -Force
+            Write-Host "RESTORE $DestinationHookPath"
+        }
+        else {
+            Remove-Item -Path $DestinationHookPath -Force
+            Write-Host "REMOVE $DestinationHookPath"
+        }
+    }
+    else {
+        $srcContent = Get-Content -Raw -Path $SourcePath
+        if ($srcContent -eq $destContent) {
+            Remove-Item -Path $DestinationHookPath -Force
+            Write-Host "REMOVE $DestinationHookPath"
+        }
+        else {
+            Write-Host "SKIP   $DestinationHookPath (exists, not a guardrails hook)"
+        }
+    }
+
+    if ((Test-Path $agentHook) -and (Test-Path $SourcePath)) {
+        $agContent = Get-Content -Raw -Path $agentHook
+        $sContent = Get-Content -Raw -Path $SourcePath
+        if ($agContent -eq $sContent) {
+            Remove-Item -Path $agentHook -Force
+            Write-Host "REMOVE $agentHook"
+        }
+    }
+}
 function Prompt-GuardrailsInput {
     Write-Host "Interactive mode."
 
@@ -140,22 +233,9 @@ if ($Guardrails -eq "off") {
     foreach ($line in Get-ManifestLines -ManifestPath $manifestPath) {
         if (-not $line.StartsWith(".githooks/")) { continue }
         $sourcePath = Join-Path $SourceDir ($line -replace "/", "\")
-        $destinationPath = Resolve-DestinationPath -TargetRepoPath $TargetRepo -RelativePath $line
-        if (-not (Test-Path $destinationPath)) { continue }
-        if (-not (Test-Path $sourcePath)) {
-            Write-Host "INFO   Template missing; leaving $destinationPath"
-            continue
-        }
-
-        $sourceContent = Get-Content -Raw -Path $sourcePath
-        $destContent = Get-Content -Raw -Path $destinationPath
-        if ($sourceContent -eq $destContent) {
-            Remove-Item -Path $destinationPath -Force
-            Write-Host "REMOVE $destinationPath"
-        }
-        else {
-            Write-Host "SKIP   $destinationPath (exists, not a guardrails hook)"
-        }
+        $hookName = $line.Substring(".githooks/".Length)
+        $destinationPath = Join-Path $TargetRepo ".git\hooks\$hookName"
+        Uninstall-Hook -SourcePath $sourcePath -DestinationHookPath $destinationPath
     }
 
     Write-Host "DONE   Guardrails OFF for: $TargetRepo"
@@ -171,13 +251,19 @@ if (-not (Test-Path $manifestPath)) {
     throw "Install manifest not found: $manifestPath"
 }
 
-foreach ($rawLine in Get-Content $manifestPath) {
-    $line = $rawLine.Trim()
-    if ([string]::IsNullOrWhiteSpace($line)) { continue }
-    if ($line.StartsWith("#")) { continue }
-    Copy-TemplateFile `
-        -SourcePath (Join-Path $SourceDir ($line -replace "/", "\")) `
-        -DestinationPath (Resolve-DestinationPath -TargetRepoPath $TargetRepo -RelativePath $line) `
-        -ForceOverwrite:$Force
+foreach ($line in Get-ManifestLines -ManifestPath $manifestPath) {
+    if ($line.StartsWith(".githooks/")) {
+        $src = Join-Path $SourceDir ($line -replace "/", "\")
+        $hookName = $line.Substring(".githooks/".Length)
+        $dest = Join-Path $TargetRepo ".git\hooks\$hookName"
+        Install-Hook -SourcePath $src -DestinationHookPath $dest -ForceOverwrite:$Force
+    }
+    else {
+        $lineWindows = $line -replace "/", "\"
+        Copy-TemplateFile `
+            -SourcePath (Join-Path $SourceDir $lineWindows) `
+            -DestinationPath (Resolve-DestinationPath -TargetRepoPath $TargetRepo -RelativePath $line) `
+            -ForceOverwrite:$Force
+    }
 }
 Write-Host "DONE   Guardrails ON for: $TargetRepo"

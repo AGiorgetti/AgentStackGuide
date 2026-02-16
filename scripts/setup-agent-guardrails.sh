@@ -124,13 +124,32 @@ if [[ "$GUARDRAILS" == "off" ]]; then
     [[ "$relpath" != .githooks/* ]] && continue
 
     src="$SOURCE_DIR/$relpath"
-    dest="$TARGET_REPO/.git/hooks/${relpath#.githooks/}"
-    if [[ -f "$dest" && -f "$src" ]]; then
-      if cmp -s "$src" "$dest"; then
+    hook_name="${relpath#.githooks/}"
+    dest="$TARGET_REPO/.git/hooks/$hook_name"
+    agent_hook="$TARGET_REPO/.git/hooks/agent-guardrails-$hook_name"
+    orig="$TARGET_REPO/.git/hooks/$hook_name.orig"
+
+    if [[ -f "$dest" ]]; then
+      if grep -q "agent-guardrails-$hook_name" "$dest" 2>/dev/null; then
+        if [[ -f "$orig" ]]; then
+          mv "$orig" "$dest"
+          echo "RESTORE $dest"
+        else
+          rm -f "$dest"
+          echo "REMOVE $dest"
+        fi
+      elif [[ -f "$src" ]] && cmp -s "$src" "$dest"; then
         rm -f "$dest"
         echo "REMOVE $dest"
       else
         echo "SKIP   $dest (exists, not a guardrails hook)"
+      fi
+    fi
+
+    if [[ -f "$agent_hook" && -f "$src" ]]; then
+      if cmp -s "$src" "$agent_hook"; then
+        rm -f "$agent_hook"
+        echo "REMOVE $agent_hook"
       fi
     fi
   done < "$MANIFEST"
@@ -165,16 +184,63 @@ copy_file() {
   echo "COPY   $dst"
 }
 
+# Dispatcher + installer helpers for hook merging/backups
+create_dispatcher() {
+  local dest="$1"
+  local hookname
+  hookname="$(basename "$dest")"
+  mkdir -p "$(dirname "$dest")"
+
+  printf '%s\n' "#!/usr/bin/env bash" "set -euo pipefail" "HOOKDIR=\"\$(dirname \"\$0\")\"" "\"\$HOOKDIR/agent-guardrails-$hookname\" \"\$@\" || exit \$?" "if [ -x \"\$HOOKDIR/$hookname.orig\" ]; then" "  \"\$HOOKDIR/$hookname.orig\" \"\$@\" || exit \$?" "fi" "exit 0" > "$dest"
+  chmod +x "$dest"
+}
+
+install_hook() {
+  local src="$1" dst="$2" force="$3"
+  local hookname agent_hook orig
+  hookname="$(basename "$dst")"
+  agent_hook="$(dirname "$dst")/agent-guardrails-$hookname"
+  orig="$dst.orig"
+
+  mkdir -p "$(dirname "$dst")"
+
+  if [[ -f "$dst" ]]; then
+    if cmp -s "$src" "$dst"; then
+      # destination already matches template; ensure agent copy exists
+      cp "$src" "$agent_hook"
+      chmod +x "$agent_hook"
+      echo "COPY   $agent_hook"
+      return
+    fi
+
+    if [[ ! -f "$orig" ]]; then
+      mv "$dst" "$orig"
+      echo "BACKUP $orig"
+    else
+      echo "INFO   backup exists: $orig"
+    fi
+  fi
+
+  cp "$src" "$agent_hook"
+  chmod +x "$agent_hook"
+  echo "COPY   $agent_hook"
+
+  create_dispatcher "$dst"
+  echo "DISPATCH $dst"
+}
+
 while IFS= read -r relpath || [[ -n "$relpath" ]]; do
   relpath="${relpath#"${relpath%%[![:space:]]*}"}"
   relpath="${relpath%"${relpath##*[![:space:]]}"}"
   [[ -z "$relpath" || "${relpath:0:1}" == "#" ]] && continue
-  dest_rel="$relpath"
-  if [[ "$relpath" == .githooks/* ]]; then
-    dest_rel=".git/hooks/${relpath#.githooks/}"
-  fi
 
-  copy_file "$SOURCE_DIR/$relpath" "$TARGET_REPO/$dest_rel"
+  if [[ "$relpath" == .githooks/* ]]; then
+    src="$SOURCE_DIR/$relpath"
+    dst="$TARGET_REPO/.git/hooks/${relpath#.githooks/}"
+    install_hook "$src" "$dst" "$FORCE"
+  else
+    copy_file "$SOURCE_DIR/$relpath" "$TARGET_REPO/$relpath"
+  fi
 done < "$MANIFEST"
 
 chmod +x "$TARGET_REPO/.git/hooks/pre-commit" "$TARGET_REPO/.git/hooks/pre-push" 2>/dev/null || true
