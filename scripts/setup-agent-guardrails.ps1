@@ -100,8 +100,7 @@ function Install-Hook {
     $dispatcher = @"
 #!/usr/bin/env bash
 set -euo pipefail
-HOOKDIR="
-`$(dirname "`$0")`"
+HOOKDIR="`$(dirname "`$0")`"
 "`$HOOKDIR/agent-guardrails-$hookName" "`$@" || exit `$?
 if [ -x "`$HOOKDIR/$hookName.orig" ]; then
   "`$HOOKDIR/$hookName.orig" "`$@" || exit `$?
