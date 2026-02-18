@@ -6,6 +6,8 @@ Repository instructions for Codex-style agents.
 
 Follow `AGENT_EXECUTION_CONTRACT.md` exactly.
 
+Use the `git-worktree-ops` skill in .agents/skills/git-worktree-ops/SKILL.md for any Git/worktree operations.
+
 ## Task Assignment Inputs
 
 Human must provide per run:

@@ -4,5 +4,9 @@ AGENTS.md
 CLAUDE.md
 AGENT_KICKOFF_PROMPT.md
 .github/copilot-instructions.md
+.agents/skills/git-worktree-ops/SKILL.md
+.agents/skills/git-worktree-ops/quick-worktree.sh
+.agents/skills/git-worktree-ops/cleanup-worktree.sh
+.agents/skills/git-worktree-ops/verify-guardrails.sh
 .githooks/pre-commit
 .githooks/pre-push
