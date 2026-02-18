@@ -5,7 +5,10 @@ git_dir="$(git rev-parse --git-dir)"
 expected_branch_file="$git_dir/agent-expected-branch"
 expected_worktree_file="$git_dir/agent-expected-worktree"
 
-[ -f "$expected_branch_file" ] || exit 0
+if [ ! -f "$expected_branch_file" ]; then
+  echo "Warning: guardrail check skipped because '$expected_branch_file' does not exist." >&2
+  exit 0
+fi
 expected_branch="$(cat "$expected_branch_file")"
 expected_worktree="$(cat "$expected_worktree_file" 2>/dev/null || true)"
 
