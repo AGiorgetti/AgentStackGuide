@@ -54,15 +54,32 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ $DELETE_REMOTE -eq 1 && $DELETE_BRANCH -eq 0 ]]; then
+  echo "Error: --remote requires --delete-branch" >&2
+  usage
+  exit 1
+fi
+
 if [[ ! -d "$WORKTREE_PATH" ]]; then
   echo "Error: Worktree path not found: $WORKTREE_PATH" >&2
   exit 1
 fi
 
-# Get branch name from worktree
-cd "$WORKTREE_PATH"
-BRANCH="$(git branch --show-current)"
-cd - >/dev/null
+# Get branch name from worktree without changing directories
+WORKTREE_ABS="$(cd "$WORKTREE_PATH" && pwd)"
+BRANCH="$(git worktree list --porcelain | awk -v wp="$WORKTREE_ABS" '
+  $1 == "worktree" { path = $2 }
+  $1 == "branch" && path == wp {
+    gsub(/^refs\/heads\//, "", $2);
+    print $2
+  }
+')"
+
+if [[ -z "${BRANCH:-}" ]]; then
+  echo "Error: Could not determine branch for worktree path: $WORKTREE_PATH" >&2
+  echo "Please ensure this path corresponds to a valid git worktree." >&2
+  exit 1
+fi
 
 echo "Cleaning up worktree:"
 echo "  Path:   $WORKTREE_PATH"
