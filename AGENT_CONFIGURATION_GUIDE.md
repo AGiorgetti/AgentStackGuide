@@ -10,6 +10,7 @@ This guide is the canonical mapping for which instruction files each agent uses.
 - `.git/hooks/pre-push`
 
 Installer note: if a repository already has a `pre-commit` or `pre-push` hook, the bootstrap installer will back it up to `.git/hooks/<hook>.orig` and install a dispatcher at `.git/hooks/<hook>` so the guardrails run first and then the original hook is executed.
+
 ## Agent-to-File Mapping
 
 - Codex:

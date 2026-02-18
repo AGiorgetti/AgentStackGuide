@@ -27,7 +27,7 @@ CURRENT_PATH="$(git rev-parse --show-toplevel)"
 # Check hooks
 echo "Hooks:"
 for hook in pre-commit pre-push; do
-  HOOK_PATH=".git/hooks/$hook"
+  HOOK_PATH="$(git rev-parse --git-path hooks/$hook)"
   if [[ -x "$HOOK_PATH" ]]; then
     echo "  ✓ $hook is executable"
   else

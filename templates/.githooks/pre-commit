@@ -5,9 +5,26 @@ git_dir="$(git rev-parse --git-dir)"
 expected_branch_file="$git_dir/agent-expected-branch"
 expected_worktree_file="$git_dir/agent-expected-worktree"
 
-[ -f "$expected_branch_file" ] || exit 0
-expected_branch="$(cat "$expected_branch_file")"
-expected_worktree="$(cat "$expected_worktree_file" 2>/dev/null || true)"
+if [ ! -f "$expected_branch_file" ]; then
+  echo "Warning: guardrail check skipped because '$expected_branch_file' does not exist." >&2
+  exit 0
+fi
+
+expected_branch=""
+if ! expected_branch="$(cat "$expected_branch_file")"; then
+  echo "Blocked: unable to read expected branch metadata from '$expected_branch_file'." >&2
+  exit 1
+fi
+
+expected_worktree=""
+if [ ! -f "$expected_worktree_file" ]; then
+  echo "Blocked: expected worktree metadata file '$expected_worktree_file' is missing." >&2
+  exit 1
+fi
+if ! expected_worktree="$(cat "$expected_worktree_file")"; then
+  echo "Blocked: unable to read expected worktree metadata from '$expected_worktree_file'." >&2
+  exit 1
+fi
 
 current_branch="$(git symbolic-ref --short -q HEAD || true)"
 current_worktree="$(git rev-parse --show-toplevel)"
@@ -17,7 +34,7 @@ if [ "$current_branch" != "$expected_branch" ]; then
   exit 1
 fi
 
-if [ -n "$expected_worktree" ] && [ "$current_worktree" != "$expected_worktree" ]; then
+if [ "$current_worktree" != "$expected_worktree" ]; then
   echo "Blocked: commits are allowed only from '$expected_worktree'." >&2
   exit 1
 fi
