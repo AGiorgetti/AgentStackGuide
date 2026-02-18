@@ -191,7 +191,16 @@ create_dispatcher() {
   hookname="$(basename "$dest")"
   mkdir -p "$(dirname "$dest")"
 
-  printf '%s\n' "#!/usr/bin/env bash" "set -euo pipefail" "HOOKDIR=\"\$(dirname \"\$0\")\"" "\"\$HOOKDIR/agent-guardrails-$hookname\" \"\$@\" || exit \$?" "if [ -x \"\$HOOKDIR/$hookname.orig\" ]; then" "  \"\$HOOKDIR/$hookname.orig\" \"\$@\" || exit \$?" "fi" "exit 0" > "$dest"
+  cat >"$dest" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+HOOKDIR="\$(dirname "\$0")"
+"\$HOOKDIR/agent-guardrails-$hookname" "\$@" || exit \$?
+if [ -x "\$HOOKDIR/$hookname.orig" ]; then
+  "\$HOOKDIR/$hookname.orig" "\$@" || exit \$?
+fi
+exit 0
+EOF
   chmod +x "$dest"
 }
 
@@ -243,5 +252,4 @@ while IFS= read -r relpath || [[ -n "$relpath" ]]; do
   fi
 done < "$MANIFEST"
 
-chmod +x "$TARGET_REPO/.git/hooks/pre-commit" "$TARGET_REPO/.git/hooks/pre-push" 2>/dev/null || true
 echo "DONE   Guardrails ON for: $TARGET_REPO"
