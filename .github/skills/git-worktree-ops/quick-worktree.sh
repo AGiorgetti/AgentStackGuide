@@ -25,6 +25,12 @@ if [[ $# -lt 2 ]]; then
   exit 1
 fi
 
+# Verify we're in a git repository
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  echo "Error: Not in a git repository. Please run this script from within a git repository." >&2
+  exit 1
+fi
+
 AGENT="$1"
 TASK="$2"
 BASE="${3:-develop}"
@@ -46,7 +52,12 @@ mkdir -p "$WORKTREE_ROOT"
 
 # Create worktree
 echo "Creating worktree..."
-git worktree add -b "$BRANCH" "$WORKTREE_PATH" "$BASE"
+if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+  echo "Branch '$BRANCH' already exists; attaching worktree to existing branch."
+  git worktree add "$WORKTREE_PATH" "$BRANCH"
+else
+  git worktree add -b "$BRANCH" "$WORKTREE_PATH" "$BASE"
+fi
 
 # Configure guardrails
 echo "Configuring guardrails..."
