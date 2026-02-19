@@ -10,8 +10,8 @@ expected_branch="$(cat "$expected_branch_file")"
 expected_remote_ref="refs/heads/$expected_branch"
 
 while read -r local_ref local_sha remote_ref remote_sha; do
-  if [ "$remote_ref" != "$expected_remote_ref" ]; then
-    echo "Blocked: this worktree can only push to '$expected_remote_ref'." >&2
+  if [ "$remote_ref" != "$expected_remote_ref" ] || [ "$local_ref" != "$expected_remote_ref" ]; then
+    echo "Blocked: this worktree can only push '$expected_remote_ref' to '$expected_remote_ref'." >&2
     exit 1
   fi
 

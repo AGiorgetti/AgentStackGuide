@@ -113,11 +113,18 @@ If branch is behind:
 ```bash
 cd ../myapp-worktrees/codex-fix-auth
 git fetch origin
+
+# Merge instead of rebase to avoid force-push (recommended with guardrails)
+git merge origin/develop
+git push
+
+# Alternative: If you must rebase, temporarily disable the pre-push hook
+git fetch origin
 git rebase origin/develop
-git push --force-with-lease
+git -c core.hooksPath=/dev/null push --force-with-lease
 ```
 
-Use `--force-with-lease` only on your own feature branch.
+**Note**: The pre-push guardrail hook blocks non-fast-forward pushes (including force-push). When rebasing is necessary, use the `git -c core.hooksPath=/dev/null` override shown above, but only after confirming you're pushing to your own feature branch.
 
 ---
 

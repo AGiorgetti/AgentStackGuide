@@ -41,10 +41,10 @@ Quickly create and configure a new worktree with guardrails.
 
 ```bash
 # Create worktree for Codex task
-./.github/skills/git-worktree-ops/quick-worktree.sh codex fix-auth
+./.agents/skills/git-worktree-ops/quick-worktree.sh codex fix-auth
 
 # Create worktree from main instead of develop
-./.github/skills/git-worktree-ops/quick-worktree.sh claude add-metrics main
+./.agents/skills/git-worktree-ops/quick-worktree.sh claude add-metrics main
 ```
 
 **What it does**:
@@ -58,10 +58,10 @@ Verify that guardrails are properly configured in a worktree.
 
 ```bash
 # Check current worktree
-./.github/skills/git-worktree-ops/verify-guardrails.sh
+./.agents/skills/git-worktree-ops/verify-guardrails.sh
 
 # Check specific worktree
-./.github/skills/git-worktree-ops/verify-guardrails.sh ../myapp-worktrees/codex-fix-auth
+./.agents/skills/git-worktree-ops/verify-guardrails.sh ../myapp-worktrees/codex-fix-auth
 ```
 
 **What it checks**:
@@ -75,13 +75,13 @@ Clean up completed or abandoned worktrees.
 
 ```bash
 # Remove worktree only
-./.github/skills/git-worktree-ops/cleanup-worktree.sh ../myapp-worktrees/codex-fix-auth
+./.agents/skills/git-worktree-ops/cleanup-worktree.sh ../myapp-worktrees/codex-fix-auth
 
 # Remove worktree and delete branch
-./.github/skills/git-worktree-ops/cleanup-worktree.sh ../myapp-worktrees/codex-fix-auth --delete-branch
+./.agents/skills/git-worktree-ops/cleanup-worktree.sh ../myapp-worktrees/codex-fix-auth --delete-branch
 
 # Remove worktree, delete local + remote branch, force if dirty
-./.github/skills/git-worktree-ops/cleanup-worktree.sh ../myapp-worktrees/codex-fix-auth \
+./.agents/skills/git-worktree-ops/cleanup-worktree.sh ../myapp-worktrees/codex-fix-auth \
   --delete-branch --remote --force
 ```
 
@@ -127,9 +127,9 @@ git worktree add -b feat/claude-add-metrics ../myapp-worktrees/claude-add-metric
 git worktree add -b feat/copilot-docs ../myapp-worktrees/copilot-docs develop
 
 # Configure guardrails (easier with script)
-./.github/skills/git-worktree-ops/quick-worktree.sh codex fix-auth
-./.github/skills/git-worktree-ops/quick-worktree.sh claude add-metrics
-./.github/skills/git-worktree-ops/quick-worktree.sh copilot docs
+./.agents/skills/git-worktree-ops/quick-worktree.sh codex fix-auth
+./.agents/skills/git-worktree-ops/quick-worktree.sh claude add-metrics
+./.agents/skills/git-worktree-ops/quick-worktree.sh copilot docs
 ```
 
 ### Merge and Clean Up
@@ -141,7 +141,7 @@ git checkout develop
 git merge --no-ff feat/codex-fix-auth
 
 # Clean up
-./.github/skills/git-worktree-ops/cleanup-worktree.sh \
+./.agents/skills/git-worktree-ops/cleanup-worktree.sh \
   ../myapp-worktrees/codex-fix-auth --delete-branch
 ```
 
@@ -149,7 +149,7 @@ git merge --no-ff feat/codex-fix-auth
 
 ```bash
 # Remove everything
-./.github/skills/git-worktree-ops/cleanup-worktree.sh \
+./.agents/skills/git-worktree-ops/cleanup-worktree.sh \
   ../myapp-worktrees/claude-add-metrics \
   --delete-branch --remote --force
 ```
@@ -160,7 +160,7 @@ git merge --no-ff feat/codex-fix-auth
 
 ```bash
 # Verify configuration
-./.github/skills/git-worktree-ops/verify-guardrails.sh
+./.agents/skills/git-worktree-ops/verify-guardrails.sh
 
 # If errors found, fix metadata
 GIT_DIR="$(git rev-parse --git-dir)"
@@ -188,12 +188,12 @@ See the detailed conflict resolution strategy in [SKILL.md](SKILL.md#conflict-re
 
 ## Installation
 
-The skill is automatically available when the `.github/skills/` directory is present in your workspace.
+The skill is automatically available when the `.agents/skills/` directory is present in your workspace.
 
 To make scripts executable:
 
 ```bash
-chmod +x .github/skills/git-worktree-ops/*.sh
+chmod +x .agents/skills/git-worktree-ops/*.sh
 ```
 
 ## Related Documentation

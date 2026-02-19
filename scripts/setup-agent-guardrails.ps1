@@ -100,15 +100,17 @@ function Install-Hook {
     $dispatcher = @"
 #!/usr/bin/env bash
 set -euo pipefail
-HOOKDIR="
-`$(dirname "`$0")`"
+HOOKDIR="`$(dirname "`$0")`"
 "`$HOOKDIR/agent-guardrails-$hookName" "`$@" || exit `$?
 if [ -x "`$HOOKDIR/$hookName.orig" ]; then
   "`$HOOKDIR/$hookName.orig" "`$@" || exit `$?
 fi
 exit 0
 "@
-    $dispatcher | Out-File -FilePath $DestinationHookPath -Encoding utf8 -Force
+    # Normalize line endings to LF and write without BOM
+    $dispatcherNormalized = $dispatcher -replace "`r?`n", "`n"
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($DestinationHookPath, $dispatcherNormalized, $utf8NoBom)
     Write-Host "DISPATCH $DestinationHookPath"
 }
 
