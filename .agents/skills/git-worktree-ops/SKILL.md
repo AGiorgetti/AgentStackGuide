@@ -122,17 +122,17 @@ cat "$GIT_DIR/agent-expected-worktree"
 
 ```bash
 # Check if pre-commit hook exists and is executable
-test -x .git/hooks/pre-commit && echo "pre-commit: ✓" || echo "pre-commit: ✗"
+test -x "$(git rev-parse --git-path hooks/pre-commit)" && echo "pre-commit: ✓" || echo "pre-commit: ✗"
 
 # Check if pre-push hook exists and is executable
-test -x .git/hooks/pre-push && echo "pre-push: ✓" || echo "pre-push: ✗"
+test -x "$(git rev-parse --git-path hooks/pre-push)" && echo "pre-push: ✓" || echo "pre-push: ✗"
 
 # Check metadata files exist
 test -f "$(git rev-parse --git-dir)/agent-expected-branch" && echo "branch binding: ✓" || echo "branch binding: ✗"
 test -f "$(git rev-parse --git-dir)/agent-expected-worktree" && echo "worktree binding: ✓" || echo "worktree binding: ✗"
 
 # View hook dispatcher (if installed)
-cat .git/hooks/pre-commit
+cat "$(git rev-parse --git-path hooks/pre-commit)"
 ```
 
 ## Safe Branch Operations
@@ -983,8 +983,9 @@ git worktree prune
 
 ```bash
 # Verify hooks are executable
-ls -la .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
+HOOK_PATH="$(git rev-parse --git-path hooks/pre-commit)"
+ls -la "$HOOK_PATH"
+chmod +x "$HOOK_PATH"
 
 # Check metadata files exist
 GIT_DIR="$(git rev-parse --git-dir)"
@@ -1193,7 +1194,7 @@ Before starting agent work in a worktree:
 - [ ] Worktree created with correct branch name
 - [ ] Branch follows naming convention `feat/<agent>-<task>`
 - [ ] Metadata files written to `.git/agent-expected-branch` and `.git/agent-expected-worktree`
-- [ ] Hooks are executable (`chmod +x .git/hooks/pre-*`)
+- [ ] Hooks are executable (`chmod +x "$(git rev-parse --git-path hooks)"/pre-*`)
 - [ ] Current branch verified with `git branch --show-current`
 - [ ] Worktree path verified with `git rev-parse --show-toplevel`
 - [ ] Base branch is up to date (`git fetch origin`)
