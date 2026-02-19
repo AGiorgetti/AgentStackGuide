@@ -298,7 +298,6 @@ git push origin :feat/old-feature  # Older syntax
 
 # Prune deleted remote branches from local
 git fetch --prune
-git remote prune origin
 ```
 
 **Rename branch**:

@@ -912,7 +912,7 @@ git bisect good v1.0.0  # This commit was good
 
 # Git checks out commit to test
 # Test the code, then:
-# git bisect good  # or git bisect bad
+git bisect good  # or git bisect bad
 
 # Repeat until Git finds the culprit
 # When done:
@@ -1051,7 +1051,7 @@ git worktree prune
 cd ~/src/myapp
 git worktree remove ../myapp-worktrees/claude-add-metrics
 # or force if needed:
-# git worktree remove --force ../myapp-worktrees/claude-add-metrics
+git worktree remove --force ../myapp-worktrees/claude-add-metrics
 
 # 2. Delete branch (use -D to force)
 git branch -D feat/claude-add-metrics
